@@ -39,7 +39,7 @@
 
     .shell {
       min-height: 100vh;
-      padding: 4px 0 66px; /* меньше отступов, почти на весь экран */
+      padding: 4px 0 80px; /* запас под футер */
       display: flex;
       justify-content: center;
     }
@@ -81,11 +81,11 @@
     .page-wrapper {
       flex: 1;
       border-radius: 10px;
-      padding: 2px 4px 2px;
-      height: calc(100vh - 120px); /* почти весь экран */
+      padding: 2px 4px;
+      /* больше НЕ задаём фиксированную высоту и scroll */
+      height: auto;
       max-height: none;
-      overflow-y: auto;
-      scroll-behavior: smooth;
+      overflow: visible;
     }
 
     .book-content p {
@@ -3549,182 +3549,179 @@ IХ</p>
   </div>
 
   <script>
-    (function () {
-      // 3. УНИКАЛЬНЫЙ ID КНИГИ (только латиница, без пробелов)
-      var BOOK_ID = "kajdasheva-simia"; // ← ПОМЕНЯЙ, напр. "kajdasheva-simia"
+  (function () {
+    // УНИКАЛЬНЫЙ ID книги (латиницей)
+    var BOOK_ID = "kajdasheva"; // ← поменяй под конкретную книгу
 
-      var root = document.documentElement;
-      var body = document.body;
-      var wrapper = document.getElementById("pageWrapper");
-      var bookHeader = document.getElementById("bookHeader");
+    var root = document.documentElement;
+    var body = document.body;
+    var wrapper = document.getElementById("pageWrapper");
+    var bookHeader = document.getElementById("bookHeader");
+    var controls = document.querySelector(".controls");
 
-      var fontMinus = document.getElementById("fontMinus");
-      var fontPlus = document.getElementById("fontPlus");
-      var fontLabel = document.getElementById("fontLabel");
-      var themeToggle = document.getElementById("themeToggle");
-      var prevBtn = document.getElementById("prevPage");
-      var nextBtn = document.getElementById("nextPage");
-      var pageLabel = document.getElementById("pageLabel");
-      var pageInput = document.getElementById("pageInput");
+    var fontMinus = document.getElementById("fontMinus");
+    var fontPlus = document.getElementById("fontPlus");
+    var fontLabel = document.getElementById("fontLabel");
+    var themeToggle = document.getElementById("themeToggle");
+    var prevBtn = document.getElementById("prevPage");
+    var nextBtn = document.getElementById("nextPage");
+    var pageLabel = document.getElementById("pageLabel");
 
-      var fontSize = 18;
-      var saveKey = "book_scroll_" + BOOK_ID;
+    var fontSize = 18;
+    var saveKey = "book_scroll_" + BOOK_ID;
 
-      function getState() {
-        var h = wrapper.clientHeight || 1;
-        var full = wrapper.scrollHeight || h;
-        var maxScroll = Math.max(full - h, 1);
-        var top = wrapper.scrollTop || 0;
-        var pageHeight = h;
-        var totalPages = Math.max(1, Math.ceil(full / pageHeight));
-        var currentPage = Math.max(1, Math.min(totalPages, Math.floor(top / pageHeight) + 1));
-        var percent = Math.round((top / maxScroll) * 100);
-        return { top, h, full, maxScroll, totalPages, currentPage, percent };
+    function getState() {
+      var winH = window.innerHeight || 1;
+      var footerH = controls ? controls.offsetHeight : 0;
+      var pageH = Math.max(200, winH - footerH); // высота «страницы»
+
+      var doc = document.documentElement;
+      var full = doc.scrollHeight;
+      var top = window.scrollY || doc.scrollTop || 0;
+      var maxScroll = Math.max(full - winH, 1);
+
+      var totalPages = Math.max(1, Math.ceil((full - footerH) / pageH));
+      var currentPage = Math.max(
+        1,
+        Math.min(totalPages, Math.floor(top / pageH) + 1)
+      );
+      var percent = Math.round((top / maxScroll) * 100);
+
+      return {
+        top: top,
+        pageH: pageH,
+        full: full,
+        maxScroll: maxScroll,
+        total: totalPages,
+        current: currentPage,
+        percent: percent
+      };
+    }
+
+    function updateInfo() {
+      var s = getState();
+      pageLabel.textContent =
+        s.current + " / " + s.total + " · " + s.percent + "%";
+
+      if (bookHeader) {
+        bookHeader.style.display = s.current === 1 ? "block" : "none";
       }
+    }
 
-      function updatePageInfo() {
-        var st = getState();
-        pageLabel.textContent = st.currentPage + " / " + st.totalPages + " · " + st.percent + "%";
-
-        // Автор + название показываем только на первой "странице"
-        if (bookHeader) {
-          bookHeader.style.display = (st.currentPage === 1) ? "block" : "none";
-        }
-
-        if (pageInput) {
-          pageInput.min = 1;
-          pageInput.max = st.totalPages;
-          pageInput.value = st.currentPage;
-        }
-      }
-
-      function applyFont() {
-        root.style.setProperty("--font-size", fontSize + "px");
-        fontLabel.textContent = fontSize + "px";
-        // после смены шрифта пересчитаем страницы/проценты
-        setTimeout(updatePageInfo, 50);
-      }
-
-      function saveStateDebounced() {
-        if (saveStateDebounced._t) clearTimeout(saveStateDebounced._t);
-        saveStateDebounced._t = setTimeout(function () {
-          var st = getState();
-          try {
-            localStorage.setItem(saveKey, JSON.stringify({
-              fraction: st.top / st.maxScroll,
-              ts: Date.now()
-            }));
-          } catch (e) {}
-        }, 250);
-      }
-
-      function restoreState() {
-        var raw = null;
+    function saveStateDebounced() {
+      if (saveStateDebounced._t) clearTimeout(saveStateDebounced._t);
+      saveStateDebounced._t = setTimeout(function () {
+        var s = getState();
         try {
-          raw = localStorage.getItem(saveKey);
+          localStorage.setItem(
+            saveKey,
+            JSON.stringify({ fraction: s.top / s.maxScroll })
+          );
         } catch (e) {}
-        if (!raw) {
-          updatePageInfo();
-          return;
-        }
-        var data;
-        try {
-          data = JSON.parse(raw);
-        } catch (e) {
-          updatePageInfo();
-          return;
-        }
-        if (!data || typeof data.fraction !== "number") {
-          updatePageInfo();
-          return;
-        }
-        var frac = Math.max(0, Math.min(1, data.fraction));
-        var h = wrapper.clientHeight || 1;
-        var full = wrapper.scrollHeight || h;
-        var maxScroll = Math.max(full - h, 1);
-        wrapper.scrollTop = frac * maxScroll;
-        updatePageInfo();
+      }, 250);
+    }
+
+    function restoreState() {
+      var raw = null;
+      try {
+        raw = localStorage.getItem(saveKey);
+      } catch (e) {}
+
+      if (!raw) {
+        updateInfo();
+        return;
       }
 
-      function goToPageIndex(target) {
-        var st = getState();
-        if (target < 1) target = 1;
-        if (target > st.totalPages) target = st.totalPages;
-        var newTop = (target - 1) * st.h;
-        wrapper.scrollTo({ top: newTop, behavior: "smooth" });
-        setTimeout(function () {
-          updatePageInfo();
-          saveStateDebounced();
-        }, 350);
+      var data;
+      try {
+        data = JSON.parse(raw);
+      } catch (e) {
+        updateInfo();
+        return;
       }
 
-      function goToPageDelta(delta) {
-        var st = getState();
-        goToPageIndex(st.currentPage + delta);
+      if (!data || typeof data.fraction !== "number") {
+        updateInfo();
+        return;
       }
 
-      function jumpToInputPage() {
-        if (!pageInput) return;
-        var st = getState();
-        var val = parseInt(pageInput.value, 10);
-        if (isNaN(val)) return;
-        if (val < 1) val = 1;
-        if (val > st.totalPages) val = st.totalPages;
-        goToPageIndex(val);
+      var doc = document.documentElement;
+      var winH = window.innerHeight || 1;
+      var full = doc.scrollHeight;
+      var maxScroll = Math.max(full - winH, 1);
+      var frac = Math.max(0, Math.min(1, data.fraction));
+
+      window.scrollTo(0, frac * maxScroll);
+      updateInfo();
+    }
+
+    function goPage(delta) {
+      var s = getState();
+      var target = s.current + delta;
+      if (target < 1) target = 1;
+      if (target > s.total) target = s.total;
+      var newTop = (target - 1) * s.pageH;
+      window.scrollTo({ top: newTop, behavior: "smooth" });
+      setTimeout(function () {
+        updateInfo();
+        saveStateDebounced();
+      }, 350);
+    }
+
+    function applyFont() {
+      root.style.setProperty("--font-size", fontSize + "px");
+      fontLabel.textContent = fontSize + "px";
+      setTimeout(function () {
+        updateInfo();
+        restoreState(); // пересчитать позицию под новый размер
+      }, 80);
+    }
+
+    // События
+    fontMinus.addEventListener("click", function () {
+      if (fontSize > 14) {
+        fontSize -= 2;
+        applyFont();
       }
+    });
 
-      // события
-      fontMinus.addEventListener("click", function () {
-        if (fontSize > 14) {
-          fontSize -= 2;
-          applyFont();
-        }
-      });
-
-      fontPlus.addEventListener("click", function () {
-        if (fontSize >= 28) return;
+    fontPlus.addEventListener("click", function () {
+      if (fontSize < 28) {
         fontSize += 2;
         applyFont();
-      });
-
-      themeToggle.addEventListener("click", function () {
-        var isDark = body.classList.toggle("dark");
-        themeToggle.textContent = isDark ? "☀️" : "🌙";
-        themeToggle.classList.toggle("active", isDark);
-      });
-
-      prevBtn.addEventListener("click", function () {
-        goToPageDelta(-1);
-      });
-
-      nextBtn.addEventListener("click", function () {
-        goToPageDelta(1);
-      });
-
-      if (pageInput) {
-        pageInput.addEventListener("keydown", function (e) {
-          if (e.key === "Enter") {
-            jumpToInputPage();
-          }
-        });
-        pageInput.addEventListener("blur", jumpToInputPage);
       }
+    });
 
-      wrapper.addEventListener("scroll", function () {
-        updatePageInfo();
-        saveStateDebounced();
-      });
+    themeToggle.addEventListener("click", function () {
+      var dark = body.classList.toggle("dark");
+      themeToggle.textContent = dark ? "☀️" : "🌙";
+      themeToggle.classList.toggle("active", dark);
+    });
 
-      window.addEventListener("resize", function () {
-        restoreState();
-      });
+    prevBtn.addEventListener("click", function () {
+      goPage(-1);
+    });
 
-      // старт
-      applyFont();
-      window.addEventListener("load", function () {
-        restoreState();
-      });
-    })();
-  </script>
+    nextBtn.addEventListener("click", function () {
+      goPage(1);
+    });
+
+    window.addEventListener("scroll", function () {
+      updateInfo();
+      saveStateDebounced();
+    });
+
+    window.addEventListener("resize", function () {
+      restoreState();
+    });
+
+    // Старт
+    applyFont();
+    window.addEventListener("load", function () {
+      restoreState();
+    });
+  })();
+</script>
+
 </body>
 </html>
