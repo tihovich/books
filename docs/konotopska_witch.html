@@ -1250,170 +1250,249 @@ I пану Халявському з його жiнкою не минулося;
   </div>
 
   <script>
-    (function () {
-      // УНИКАЛЬНЫЙ ID КНИГИ — поменяй для каждой html-страницы
-      var BOOK_ID = "kajdasheva-simia";
+  (function () {
+    // УНИКАЛЬНЫЙ ID КНИГИ — поменяй для каждой html-страницы
+    var BOOK_ID = "konotopska-witch";
 
-      var root = document.documentElement;
-      var body = document.body;
-      var wrapper = document.getElementById("pageWrapper");
-      var source = document.getElementById("hiddenSource");
+    var root = document.documentElement;
+    var body = document.body;
+    var wrapper = document.getElementById("pageWrapper");
+    var source = document.getElementById("hiddenSource");
 
-      var fontMinus = document.getElementById("fontMinus");
-      var fontPlus = document.getElementById("fontPlus");
-      var fontLabel = document.getElementById("fontLabel");
-      var themeToggle = document.getElementById("themeToggle");
-      var prevBtn = document.getElementById("prevPage");
-      var nextBtn = document.getElementById("nextPage");
-      var pageLabel = document.getElementById("pageLabel");
+    var fontMinus = document.getElementById("fontMinus");
+    var fontPlus = document.getElementById("fontPlus");
+    var fontLabel = document.getElementById("fontLabel");
+    var themeToggle = document.getElementById("themeToggle");
+    var prevBtn = document.getElementById("prevPage");
+    var nextBtn = document.getElementById("nextPage");
+    var pageLabel = document.getElementById("pageLabel");
 
-      var fontSize = 18;
-      var pages = [];
-      var currentPage = 0;
-      var saveKey = "book_page_" + BOOK_ID;
+    var fontSize = 18;
+    var pages = [];
+    var currentPage = 0;
+    var saveKey = "book_page_" + BOOK_ID;
 
-      var sourceHTML = source.innerHTML; // оригинальный текст
+    var sourceHTML = source.innerHTML; // оригинальный текст
 
-      function applyFont() {
-        root.style.setProperty("--font-size", fontSize + "px");
-        fontLabel.textContent = fontSize + "px";
-      }
+    function applyFont() {
+      root.style.setProperty("--font-size", fontSize + "px");
+      fontLabel.textContent = fontSize + "px";
+    }
 
-      function buildPages() {
-        wrapper.innerHTML = "";
-        pages = [];
-        currentPage = 0;
+    function newPage() {
+      var page = document.createElement("div");
+      page.className = "book-page";
+      wrapper.appendChild(page);
+      pages.push(page);
+      return page;
+    }
 
-        var tmp = document.createElement("div");
-        tmp.innerHTML = sourceHTML;
-        var nodes = Array.from(tmp.childNodes);
+    function updatePageLabel() {
+      var total = Math.max(pages.length, 1);
+      var n = currentPage + 1;
+      var percent = Math.round((n / total) * 100);
+      pageLabel.textContent = n + " / " + total + " · " + percent + "%";
+    }
 
-        var maxHeight = wrapper.clientHeight || wrapper.offsetHeight || 400;
-        if (maxHeight < 200) maxHeight = 400;
+    function savePage() {
+      try {
+        localStorage.setItem(saveKey, JSON.stringify({
+          page: currentPage,
+          ts: Date.now()
+        }));
+      } catch (e) {}
+    }
 
-        var page = document.createElement("div");
-        page.className = "book-page active";
-        wrapper.appendChild(page);
-        pages.push(page);
-
-        nodes.forEach(function (node) {
-          if (node.nodeType === Node.TEXT_NODE &&
-              !node.textContent.trim()) {
-            return; // пропускаем пустые текстовые узлы
-          }
-          var clone = node.cloneNode(true);
-          page.appendChild(clone);
-
-          if (page.scrollHeight > maxHeight) {
-            // переполнена: переносим узел на следующую страницу
-            page.removeChild(clone);
-            page.classList.remove("active");
-
-            page = document.createElement("div");
-            page.className = "book-page";
-            wrapper.appendChild(page);
-            pages.push(page);
-            page.appendChild(clone);
-          }
-        });
-
-        if (pages.length) {
-          pages[0].classList.add("active");
-        }
-        updatePageLabel();
-        restorePageIfAny();
-      }
-
-      function showPage(index) {
-        if (!pages.length) return;
-        if (index < 0) index = 0;
-        if (index >= pages.length) index = pages.length - 1;
+    function restorePageIfAny() {
+      try {
+        var raw = localStorage.getItem(saveKey);
+        if (!raw) return;
+        var data = JSON.parse(raw);
+        if (!data || typeof data.page !== "number") return;
+        if (data.page < 0 || data.page >= pages.length) return;
+        currentPage = data.page;
         pages.forEach(function (p, i) {
-          p.classList.toggle("active", i === index);
+          p.classList.toggle("active", i === currentPage);
         });
-        currentPage = index;
         updatePageLabel();
-        savePage();
+      } catch (e) {}
+    }
+
+    function showPage(index) {
+      if (!pages.length) return;
+      if (index < 0) index = 0;
+      if (index >= pages.length) index = pages.length - 1;
+      pages.forEach(function (p, i) {
+        p.classList.toggle("active", i === index);
+      });
+      currentPage = index;
+      updatePageLabel();
+      savePage();
+    }
+
+    // ✂ Главное: аккуратно режем длинные абзацы на части по высоте
+    function paginateContent() {
+      wrapper.innerHTML = "";
+      pages = [];
+      currentPage = 0;
+
+      var tmp = document.createElement("div");
+      tmp.innerHTML = sourceHTML;
+      var nodes = Array.from(tmp.childNodes);
+
+      var page = newPage();
+      page.classList.add("active");
+
+      var maxHeight = wrapper.clientHeight || wrapper.offsetHeight || 400;
+      if (maxHeight < 200) maxHeight = 400;
+
+      function addElementNode(node) {
+        // блоки типа заголовков и т.п. — как раньше
+        if (node.nodeType === Node.ELEMENT_NODE &&
+            node.tagName.toLowerCase() !== "p") {
+
+          page.appendChild(node.cloneNode(true));
+          if (page.scrollHeight > maxHeight) {
+            page.removeChild(page.lastChild);
+            page.classList.remove("active");
+            page = newPage();
+            page.appendChild(node.cloneNode(true));
+          }
+          return;
+        }
+
+        // абзацы режем на части
+        var text = node.textContent || "";
+        var className = "";
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          className = node.className || "";
+        }
+
+        var idx = 0;
+        var len = text.length;
+
+        while (idx < len) {
+          var chunkSize = Math.min(900, len - idx); // стартовый размер куска
+          var placed = false;
+
+          while (!placed && chunkSize > 80) {
+            var chunkText = text.slice(idx, idx + chunkSize);
+
+            // стараемся резать по границе предложения
+            var lastDot = chunkText.lastIndexOf(".");
+            var lastQuest = chunkText.lastIndexOf("?");
+            var lastExcl = chunkText.lastIndexOf("!");
+            var bestBreak = Math.max(lastDot, lastQuest, lastExcl);
+            if (bestBreak > 200) {
+              chunkText = chunkText.slice(0, bestBreak + 1);
+            }
+
+            var p = document.createElement("p");
+            if (className) p.className = className;
+            p.textContent = chunkText.trim();
+
+            page.appendChild(p);
+
+            if (page.scrollHeight > maxHeight) {
+              // не влезло — откат и новая страница
+              page.removeChild(p);
+              page.classList.remove("active");
+              page = newPage();
+              page.appendChild(p);
+
+              // если даже на пустой странице кусок не помещается —
+              // уменьшаем размер текста
+              if (page.scrollHeight > maxHeight) {
+                page.removeChild(p);
+                chunkSize = Math.floor(chunkSize * 0.7);
+                continue;
+              }
+            }
+
+            placed = true;
+            idx += chunkText.length;
+          }
+
+          if (!placed) {
+            // остаток очень короткий — просто добавим как есть
+            var last = document.createElement("p");
+            if (className) last.className = className;
+            last.textContent = text.slice(idx).trim();
+            page.appendChild(last);
+            idx = len;
+          }
+        }
       }
 
-      function updatePageLabel() {
-        var total = Math.max(pages.length, 1);
-        var n = currentPage + 1;
-        var percent = Math.round((n / total) * 100);
-        pageLabel.textContent = n + " / " + total + " · " + percent + "%";
-      }
+      nodes.forEach(function (node) {
+        if (node.nodeType === Node.TEXT_NODE &&
+            !node.textContent.trim()) {
+          return;
+        }
+        if (node.nodeType === Node.ELEMENT_NODE ||
+            node.nodeType === Node.TEXT_NODE) {
 
-      function savePage() {
-        try {
-          localStorage.setItem(saveKey, JSON.stringify({
-            page: currentPage,
-            ts: Date.now()
-          }));
-        } catch (e) {}
-      }
-
-      function restorePageIfAny() {
-        try {
-          var raw = localStorage.getItem(saveKey);
-          if (!raw) return;
-          var data = JSON.parse(raw);
-          if (!data || typeof data.page !== "number") return;
-          if (data.page < 0 || data.page >= pages.length) return;
-          currentPage = data.page;
-          pages.forEach(function (p, i) {
-            p.classList.toggle("active", i === currentPage);
-          });
-          updatePageLabel();
-        } catch (e) {}
-      }
-
-      // События управления
-      fontMinus.addEventListener("click", function () {
-        if (fontSize > 14) {
-          fontSize -= 2;
-          applyFont();
-          // при изменении размера шрифта пересобираем страницы
-          setTimeout(buildPages, 50);
+          // если это «голый» текст вне <p> — обернём в абзац
+          if (node.nodeType === Node.TEXT_NODE) {
+            var p = document.createElement("p");
+            p.textContent = node.textContent;
+            node = p;
+          }
+          addElementNode(node);
         }
       });
 
-      fontPlus.addEventListener("click", function () {
-        if (fontSize < 26) {
-          fontSize += 2;
-          applyFont();
-          setTimeout(buildPages, 50);
-        }
-      });
+      if (pages.length) {
+        pages.forEach(function (p) { p.classList.remove("active"); });
+        pages[0].classList.add("active");
+      }
+      updatePageLabel();
+      restorePageIfAny();
+    }
 
-      themeToggle.addEventListener("click", function () {
-        var isDark = body.classList.toggle("dark");
-        themeToggle.textContent = isDark ? "☀️" : "🌙";
-        themeToggle.classList.toggle("active", isDark);
-      });
+    // События управления
+    fontMinus.addEventListener("click", function () {
+      if (fontSize > 14) {
+        fontSize -= 2;
+        applyFont();
+        setTimeout(paginateContent, 50);
+      }
+    });
 
-      prevBtn.addEventListener("click", function () {
-        showPage(currentPage - 1);
-      });
+    fontPlus.addEventListener("click", function () {
+      if (fontSize < 26) {
+        fontSize += 2;
+        applyFont();
+        setTimeout(paginateContent, 50);
+      }
+    });
 
-      nextBtn.addEventListener("click", function () {
-        showPage(currentPage + 1);
-      });
+    themeToggle.addEventListener("click", function () {
+      var isDark = body.classList.toggle("dark");
+      themeToggle.textContent = isDark ? "☀️" : "🌙";
+      themeToggle.classList.toggle("active", isDark);
+    });
 
-      // запуск
-      applyFont();
-      // ждём, пока браузер посчитает высоту wrapper, затем режем страницы
-      window.addEventListener("load", function () {
-        buildPages();
-      });
+    prevBtn.addEventListener("click", function () {
+      showPage(currentPage - 1);
+    });
 
-      // при повороте экрана / ресайзе пересобрать страницы
-      window.addEventListener("resize", function () {
-        clearTimeout(window._resizeTimer);
-        window._resizeTimer = setTimeout(function () {
-          buildPages();
-        }, 200);
-      });
-    })();
-  </script>
-</body>
-</html>
+    nextBtn.addEventListener("click", function () {
+      showPage(currentPage + 1);
+    });
+
+    // запуск
+    applyFont();
+
+    window.addEventListener("load", function () {
+      paginateContent();
+    });
+
+    window.addEventListener("resize", function () {
+      clearTimeout(window._resizeTimer);
+      window._resizeTimer = setTimeout(function () {
+        paginateContent();
+      }, 200);
+    });
+  })();
+</script>
