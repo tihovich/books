@@ -2,7 +2,8 @@
 <html lang="uk">
 <head>
   <meta charset="utf-8" />
-  <title>Конотопська відьма — Григорій Квітка-Основ'яненко</title>
+  <title>Конотопська відьма - Григорій Квітка-Основ'яненко</title> <!-- ← 1. ПОМЕНЯЙ -->
+
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
@@ -28,7 +29,6 @@
       margin: 0;
       padding: 0;
       background: var(--bg);
-      color: --fg;
       color: var(--fg);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
                    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
@@ -39,7 +39,7 @@
 
     .shell {
       min-height: 100vh;
-      padding: 8px 6px 66px; /* место под нижнюю панель */
+      padding: 4px 0 66px; /* меньше отступов, почти на весь экран */
       display: flex;
       justify-content: center;
     }
@@ -50,10 +50,10 @@
       width: 100%;
       border-radius: 12px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-      padding: 16px 16px 18px;
+      padding: 10px 8px 12px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     header {
@@ -77,12 +77,13 @@
       opacity: 0.8;
     }
 
-    /* КОНТЕЙНЕР ПРОКРУТКИ (видимая "страница") */
+    /* видимая "страница" (область прокрутки) */
     .page-wrapper {
       flex: 1;
       border-radius: 10px;
-      padding: 4px 4px 2px;
-      max-height: min(72vh, 520px);
+      padding: 2px 4px 2px;
+      height: calc(100vh - 120px); /* почти весь экран */
+      max-height: none;
       overflow-y: auto;
       scroll-behavior: smooth;
     }
@@ -168,13 +169,30 @@
       align-items: center;
     }
 
+    .page-input {
+      width: 56px;
+      padding: 3px 6px;
+      border-radius: 18px;
+      border: none;
+      background: #ffffff22;
+      color: #f5f5f5;
+      font: inherit;
+      text-align: center;
+      -moz-appearance: textfield;
+    }
+    .page-input::-webkit-outer-spin-button,
+    .page-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
     @media (max-width: 480px) {
       .reader {
         border-radius: 10px;
-        padding: 12px 10px 14px;
+        padding: 8px 6px 12px;
       }
       h1 { font-size: 1.45em; }
-      .page-wrapper { max-height: 68vh; }
+      .page-wrapper { height: calc(100vh - 120px); }
     }
   </style>
 </head>
@@ -184,17 +202,16 @@
     <article class="reader">
       <!-- ШАПКА: будет видна только на первой "странице" -->
       <header id="bookHeader">
-        <h1>Конотопська відьма</h1>
-        <div class="book-subtitle">Григорій Квітка-Основ'яненко</div>
-        <div class="book-meta">Класична повість · публічне надбання</div>
+        <h1>Конотопська відьма</h1> <!-- ← 2. ПОМЕНЯЙ -->
+        <div class="book-subtitle">Григорій Квітка-Основ'яненко</div> <!-- ← 2. ПОМЕНЯЙ -->
+        <div class="book-meta">Класична література · публічне надбання</div>
       </header>
 
-      <!-- ОДИН ЕДИНЫЙ ТЕКСТ, без нарезки DOM -->
+      <!-- ОДИН ЕДИНЫЙ ТЕКСТ, без нарезки -->
       <div class="page-wrapper" id="pageWrapper">
         <div class="book-content" id="bookContent">
-          <!-- 🔽🔽🔽 ТЕКСТ КНИГИ 🔽🔽🔽 -->
-
-         <p>І</p>
+          <!-- 🔽🔽🔽 СЮДА ВСТАВЛЯЕШЬ ТЕКСТ КНИГИ 🔽🔽🔽 -->
+<p>І</p>
 <p>
 Смутний i невеселий сидiв собi на лавцi, у новiй свiтлицi, що вiдгородив вiд противної хати, конотопський пан сотник Микита Уласович Забрьоха. Хоч парень собi i чепурний був, а тут i у недiленьку святу не брав бiлої сорочки, та й — прощайте у сiм словi — китаєвих синiх штанiв на нiч не знiмав, так, сердека, у них i ночував, рад-рад, що за пiвнiч допхався додому ; а там чи заснув, чи нi, вже його, ще сонце не сходило, збудили. Зараз схопивсь, випозiхався, вичухався, помоливсь богу, нюхнув разiв тричi крiпкої роменської кабаки, прослухав, що йому читали, дав порядок i, зоставшись сам у свiтлицi, сiв на лавцi: голова йому нечесана, чуб не пiдголений, пика невмита, очi заспанi, уси розкудовченi, сорочка розхристана; край його на столi люлька i гаманець, каламар, гребінець i повна карватка ще торiшньої дулiвки, що ще звечора наточила йому Пазька у пляшку, а вiн, хоч i насипав у карватку, щоб то, знаєте, з журби випити, та як зажуривсь знова, та й забув, так i лiг та й заснув; та й тепер, уставши, не дуже на тую дулiвку квапився, бо ще нове лихо зовсiм його скрутило, i вiн i сам себе з журби не тямив.</p>
 <p>
@@ -1208,13 +1225,13 @@ I пану Халявському з його жiнкою не минулося;
 <p>
 От вам i конотопська вiдьма!</p>
 
-          <!-- 🔼🔼🔼 КОНЕЦ ТЕКСТА КНИГИ 🔼🔼🔼 -->
+          <!-- 🔼🔼🔼 ДО СЮДА ТЕКСТ КНИГИ 🔼🔼🔼 -->
         </div>
       </div>
     </article>
   </div>
 
-  <!-- нижняя панель -->
+  <!-- Нижняя панель управления -->
   <div class="controls">
     <div class="controls-left">
       <button class="btn" id="fontMinus">A−</button>
@@ -1226,6 +1243,7 @@ I пану Халявському з його жiнкою не минулося;
         <button class="btn" id="prevPage">◀</button>
         <button class="btn" id="nextPage">▶</button>
       </div>
+      <input class="page-input" id="pageInput" type="number" min="1" value="1" />
       <span class="page-indicator" id="pageLabel">1 / 1 · 0%</span>
       <button class="btn btn-toggle" id="themeToggle">🌙</button>
     </div>
@@ -1233,8 +1251,8 @@ I пану Халявському з його жiнкою не минулося;
 
   <script>
     (function () {
-      // УНИКАЛЬНЫЙ ID КНИГИ — для сохранения позиции (localStorage)
-      var BOOK_ID = "konotopska-vidma";
+      // 3. УНИКАЛЬНЫЙ ID КНИГИ (только латиница, без пробелов)
+      var BOOK_ID = "my-book-id"; // ← ПОМЕНЯЙ, напр. "kajdasheva-simia"
 
       var root = document.documentElement;
       var body = document.body;
@@ -1248,15 +1266,10 @@ I пану Халявському з його жiнкою не минулося;
       var prevBtn = document.getElementById("prevPage");
       var nextBtn = document.getElementById("nextPage");
       var pageLabel = document.getElementById("pageLabel");
+      var pageInput = document.getElementById("pageInput");
 
       var fontSize = 18;
       var saveKey = "book_scroll_" + BOOK_ID;
-
-      function applyFont() {
-        root.style.setProperty("--font-size", fontSize + "px");
-        fontLabel.textContent = fontSize + "px";
-        updatePageInfo();
-      }
 
       function getState() {
         var h = wrapper.clientHeight || 1;
@@ -1274,10 +1287,23 @@ I пану Халявському з його жiнкою не минулося;
         var st = getState();
         pageLabel.textContent = st.currentPage + " / " + st.totalPages + " · " + st.percent + "%";
 
-        // 👇 Показываем автора и название только на первой "странице"
+        // Автор + название показываем только на первой "странице"
         if (bookHeader) {
           bookHeader.style.display = (st.currentPage === 1) ? "block" : "none";
         }
+
+        if (pageInput) {
+          pageInput.min = 1;
+          pageInput.max = st.totalPages;
+          pageInput.value = st.currentPage;
+        }
+      }
+
+      function applyFont() {
+        root.style.setProperty("--font-size", fontSize + "px");
+        fontLabel.textContent = fontSize + "px";
+        // после смены шрифта пересчитаем страницы/проценты
+        setTimeout(updatePageInfo, 50);
       }
 
       function saveStateDebounced() {
@@ -1321,9 +1347,8 @@ I пану Халявському з його жiнкою не минулося;
         updatePageInfo();
       }
 
-      function goToPage(delta) {
+      function goToPageIndex(target) {
         var st = getState();
-        var target = st.currentPage + delta;
         if (target < 1) target = 1;
         if (target > st.totalPages) target = st.totalPages;
         var newTop = (target - 1) * st.h;
@@ -1332,6 +1357,21 @@ I пану Халявському з його жiнкою не минулося;
           updatePageInfo();
           saveStateDebounced();
         }, 350);
+      }
+
+      function goToPageDelta(delta) {
+        var st = getState();
+        goToPageIndex(st.currentPage + delta);
+      }
+
+      function jumpToInputPage() {
+        if (!pageInput) return;
+        var st = getState();
+        var val = parseInt(pageInput.value, 10);
+        if (isNaN(val)) return;
+        if (val < 1) val = 1;
+        if (val > st.totalPages) val = st.totalPages;
+        goToPageIndex(val);
       }
 
       // события
@@ -1355,12 +1395,21 @@ I пану Халявському з його жiнкою не минулося;
       });
 
       prevBtn.addEventListener("click", function () {
-        goToPage(-1);
+        goToPageDelta(-1);
       });
 
       nextBtn.addEventListener("click", function () {
-        goToPage(1);
+        goToPageDelta(1);
       });
+
+      if (pageInput) {
+        pageInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") {
+            jumpToInputPage();
+          }
+        });
+        pageInput.addEventListener("blur", jumpToInputPage);
+      }
 
       wrapper.addEventListener("scroll", function () {
         updatePageInfo();
