@@ -28,6 +28,7 @@
       margin: 0;
       padding: 0;
       background: var(--bg);
+      color: --fg;
       color: var(--fg);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
                    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
@@ -76,7 +77,7 @@
       opacity: 0.8;
     }
 
-    /* КОНТЕЙНЕР ПРОКРУТКИ (страница) */
+    /* КОНТЕЙНЕР ПРОКРУТКИ (видимая "страница") */
     .page-wrapper {
       flex: 1;
       border-radius: 10px;
@@ -181,9 +182,11 @@
 <body>
   <div class="shell">
     <article class="reader">
-      <header>
+      <!-- ШАПКА: будет видна только на первой "странице" -->
+      <header id="bookHeader">
         <h1>Конотопська відьма</h1>
         <div class="book-subtitle">Григорій Квітка-Основ'яненко</div>
+        <div class="book-meta">Класична повість · публічне надбання</div>
       </header>
 
       <!-- ОДИН ЕДИНЫЙ ТЕКСТ, без нарезки DOM -->
@@ -1204,12 +1207,14 @@ I пану Халявському з його жiнкою не минулося;
 А що Зубисi досталося, то нехай бог боронить! Поки пан Халявський був конотопським сотником, так пожила у розкошi. Був їй i батрак, була й наньмичка, вiд сотника панщиною приставлена, i на ралець ходили до неї люди зараз пiсля сотнички, i нiхто не смiв її не тiльки вiдьмою або чим взивати, та ще й величали її по менню: Семеновна, або панi Зубиха. От до чого було прийшло! Як же пана Халявського "мiнили, так i на неї увесь мир плюнув. Та вона таки швидко зачахла, зачавлiла i скоро дуба дала. Та ще не зараз i вмерла. Що вже страждала! Умира i не вмира; i руками, i ногами не двига; а стогне на всю хату, — так що i на вулицю чути було. А тут ще кiт її розходився та нявчить за нею скiльки є духу... От там-то не страшно було!.. Далi зiрвали стелю... тут де взявся ворон, та чорний-чорний; улетячи у хату, надлетiв над неї, крилами махнув... тут їй i амiнь... тiльки зуби вискалила!.. а кiт так i лопнув,, як пузир; а ворон, хто його зна, де i дiвсь!.. Нiкуди її по-людськи ховати; виволокли за село, зарили ниць у яму, прибили осиковим кiлком та зверху i заплiшили, щоб ще не скочила. Собацi собача смерть!</p>
 <p>
 От вам i конотопська вiдьма!</p>
+
           <!-- 🔼🔼🔼 КОНЕЦ ТЕКСТА КНИГИ 🔼🔼🔼 -->
         </div>
       </div>
     </article>
   </div>
 
+  <!-- нижняя панель -->
   <div class="controls">
     <div class="controls-left">
       <button class="btn" id="fontMinus">A−</button>
@@ -1228,12 +1233,13 @@ I пану Халявському з його жiнкою не минулося;
 
   <script>
     (function () {
-      // УНИКАЛЬНЫЙ ID КНИГИ — ДЛЯ localStorage
+      // УНИКАЛЬНЫЙ ID КНИГИ — для сохранения позиции (localStorage)
       var BOOK_ID = "konotopska-vidma";
 
       var root = document.documentElement;
       var body = document.body;
       var wrapper = document.getElementById("pageWrapper");
+      var bookHeader = document.getElementById("bookHeader");
 
       var fontMinus = document.getElementById("fontMinus");
       var fontPlus = document.getElementById("fontPlus");
@@ -1267,6 +1273,11 @@ I пану Халявському з його жiнкою не минулося;
       function updatePageInfo() {
         var st = getState();
         pageLabel.textContent = st.currentPage + " / " + st.totalPages + " · " + st.percent + "%";
+
+        // 👇 Показываем автора и название только на первой "странице"
+        if (bookHeader) {
+          bookHeader.style.display = (st.currentPage === 1) ? "block" : "none";
+        }
       }
 
       function saveStateDebounced() {
@@ -1317,7 +1328,6 @@ I пану Халявському з його жiнкою не минулося;
         if (target > st.totalPages) target = st.totalPages;
         var newTop = (target - 1) * st.h;
         wrapper.scrollTo({ top: newTop, behavior: "smooth" });
-        // немного подождём, потом обновим и сохраним
         setTimeout(function () {
           updatePageInfo();
           saveStateDebounced();
@@ -1333,7 +1343,7 @@ I пану Халявському з його жiнкою не минулося;
       });
 
       fontPlus.addEventListener("click", function () {
-        if (fontSize > 28) return;
+        if (fontSize >= 28) return;
         fontSize += 2;
         applyFont();
       });
@@ -1358,13 +1368,11 @@ I пану Халявському з його жiнкою не минулося;
       });
 
       window.addEventListener("resize", function () {
-        // при изменении размеров пытаемся восстановить позицию по доле
         restoreState();
       });
 
       // старт
       applyFont();
-      // небольшая задержка, чтобы DOM дорендерился
       window.addEventListener("load", function () {
         restoreState();
       });
