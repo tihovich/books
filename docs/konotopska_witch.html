@@ -1249,10 +1249,10 @@ I пану Халявському з його жiнкою не минулося;
     </div>
   </div>
 
-  <script>
+ <script>
   (function () {
     // УНИКАЛЬНЫЙ ID КНИГИ — поменяй для каждой html-страницы
-    var BOOK_ID = "konotopska-witch";
+    var BOOK_ID = "konotopska-vidma"; // ← здесь своё ID для книги
 
     var root = document.documentElement;
     var body = document.body;
@@ -1330,6 +1330,17 @@ I пану Халявському з його жiнкою не минулося;
       savePage();
     }
 
+    // ищем красивую точку разрыва (., ?, !, ;, ,)
+    function findNiceBreak(text) {
+      var punct = [".", "?", "!", ";", ","];
+      var best = -1;
+      punct.forEach(function (ch) {
+        var idx = text.lastIndexOf(ch);
+        if (idx > best) best = idx;
+      });
+      return best;
+    }
+
     // ✂ Главное: аккуратно режем длинные абзацы на части по высоте
     function paginateContent() {
       wrapper.innerHTML = "";
@@ -1341,22 +1352,21 @@ I пану Халявському з його жiнкою не минулося;
       var nodes = Array.from(tmp.childNodes);
 
       var page = newPage();
-      page.classList.add("active");
 
       var maxHeight = wrapper.clientHeight || wrapper.offsetHeight || 400;
-      if (maxHeight < 200) maxHeight = 400;
+      if (maxHeight < 250) maxHeight = 400;
 
       function addElementNode(node) {
-        // блоки типа заголовков и т.п. — как раньше
+        // блоки, которые не <p>, добавляем как есть
         if (node.nodeType === Node.ELEMENT_NODE &&
             node.tagName.toLowerCase() !== "p") {
 
-          page.appendChild(node.cloneNode(true));
+          var clone = node.cloneNode(true);
+          page.appendChild(clone);
           if (page.scrollHeight > maxHeight) {
-            page.removeChild(page.lastChild);
-            page.classList.remove("active");
+            page.removeChild(clone);
             page = newPage();
-            page.appendChild(node.cloneNode(true));
+            page.appendChild(clone);
           }
           return;
         }
@@ -1372,19 +1382,17 @@ I пану Халявському з його жiнкою не минулося;
         var len = text.length;
 
         while (idx < len) {
-          var chunkSize = Math.min(900, len - idx); // стартовый размер куска
+          // базовый размер куска — побольше, чтобы страницы были плотнее
+          var chunkSize = Math.min(1500, len - idx);
           var placed = false;
 
           while (!placed && chunkSize > 80) {
             var chunkText = text.slice(idx, idx + chunkSize);
 
-            // стараемся резать по границе предложения
-            var lastDot = chunkText.lastIndexOf(".");
-            var lastQuest = chunkText.lastIndexOf("?");
-            var lastExcl = chunkText.lastIndexOf("!");
-            var bestBreak = Math.max(lastDot, lastQuest, lastExcl);
-            if (bestBreak > 200) {
-              chunkText = chunkText.slice(0, bestBreak + 1);
+            // попробуем найти красивую точку разрыва
+            var niceIdx = findNiceBreak(chunkText);
+            if (niceIdx > 200) {
+              chunkText = chunkText.slice(0, niceIdx + 1);
             }
 
             var p = document.createElement("p");
@@ -1396,12 +1404,11 @@ I пану Халявському з його жiнкою не минулося;
             if (page.scrollHeight > maxHeight) {
               // не влезло — откат и новая страница
               page.removeChild(p);
-              page.classList.remove("active");
               page = newPage();
               page.appendChild(p);
 
-              // если даже на пустой странице кусок не помещается —
-              // уменьшаем размер текста
+              // если даже на пустой странице не помещается —
+              // уменьшаем размер куска и пробуем ещё раз
               if (page.scrollHeight > maxHeight) {
                 page.removeChild(p);
                 chunkSize = Math.floor(chunkSize * 0.7);
@@ -1429,23 +1436,33 @@ I пану Халявському з його жiнкою не минулося;
             !node.textContent.trim()) {
           return;
         }
-        if (node.nodeType === Node.ELEMENT_NODE ||
-            node.nodeType === Node.TEXT_NODE) {
-
-          // если это «голый» текст вне <p> — обернём в абзац
-          if (node.nodeType === Node.TEXT_NODE) {
-            var p = document.createElement("p");
-            p.textContent = node.textContent;
-            node = p;
-          }
+        if (node.nodeType === Node.TEXT_NODE) {
+          var p = document.createElement("p");
+          p.textContent = node.textContent;
+          addElementNode(p);
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
           addElementNode(node);
         }
       });
 
-      if (pages.length) {
-        pages.forEach(function (p) { p.classList.remove("active"); });
-        pages[0].classList.add("active");
+      // 🔍 Убираем пустые страницы (без текста)
+      var cleaned = [];
+      pages.forEach(function (p) {
+        if (p.textContent.trim().length === 0) {
+          wrapper.removeChild(p);
+        } else {
+          cleaned.push(p);
+        }
+      });
+      pages = cleaned;
+      if (!pages.length) {
+        pages.push(newPage());
       }
+
+      pages.forEach(function (p, i) {
+        p.classList.toggle("active", i === 0);
+      });
+      currentPage = 0;
       updatePageLabel();
       restorePageIfAny();
     }
@@ -1455,7 +1472,7 @@ I пану Халявському з його жiнкою не минулося;
       if (fontSize > 14) {
         fontSize -= 2;
         applyFont();
-        setTimeout(paginateContent, 50);
+        setTimeout(paginateContent, 60);
       }
     });
 
@@ -1463,7 +1480,7 @@ I пану Халявському з його жiнкою не минулося;
       if (fontSize < 26) {
         fontSize += 2;
         applyFont();
-        setTimeout(paginateContent, 50);
+        setTimeout(paginateContent, 60);
       }
     });
 
