@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
   <meta charset="utf-8" />
-  <title>Украдене щастя - Іван Франко</title> <!-- ← 1. ПОМЕНЯЙ -->
+  <title>Украдене щастя - Іван Франко</title> <!-- ← поменяй -->
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
@@ -39,7 +39,7 @@
 
     .shell {
       min-height: 100vh;
-      padding: 4px 0 66px; /* меньше отступов, почти на весь экран */
+      padding: 4px 0 66px;
       display: flex;
       justify-content: center;
     }
@@ -49,7 +49,7 @@
       max-width: 780px;
       width: 100%;
       border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
       padding: 10px 8px 12px;
       display: flex;
       flex-direction: column;
@@ -61,10 +61,9 @@
       margin-bottom: 4px;
     }
 
-    h1 {
+    header h1 {
       margin: 0 0 6px;
       font-size: 1.6em;
-      letter-spacing: 0.03em;
     }
 
     .book-subtitle {
@@ -77,13 +76,11 @@
       opacity: 0.8;
     }
 
-    /* видимая "страница" (область прокрутки) */
     .page-wrapper {
       flex: 1;
       border-radius: 10px;
-      padding: 2px 4px 2px;
-      height: calc(100vh - 120px); /* почти весь экран */
-      max-height: none;
+      padding: 2px 4px;
+      height: calc(100vh - 120px);
       overflow-y: auto;
       scroll-behavior: smooth;
     }
@@ -109,20 +106,20 @@
       text-align: center;
     }
 
-    /* нижняя панель управления */
+    /* PANEL */
     .controls {
       position: fixed;
+      bottom: 0;
       left: 0;
       right: 0;
-      bottom: 0;
       padding: 6px 10px;
-      background: rgba(20, 20, 20, 0.93);
+      background: rgba(20,20,20,0.93);
       color: #f5f5f5;
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 13px;
-      z-index: 1000;
+      z-index: 999;
     }
 
     .controls-left,
@@ -130,7 +127,6 @@
       display: flex;
       gap: 6px;
       align-items: center;
-      flex-wrap: nowrap;
     }
 
     .btn {
@@ -139,12 +135,7 @@
       padding: 4px 10px;
       background: #ffffff22;
       color: inherit;
-      font: inherit;
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
       min-width: 28px;
     }
 
@@ -154,44 +145,17 @@
 
     .btn-toggle.active {
       background: var(--accent);
-      color: #fff;
+      color: white;
     }
 
     .page-indicator {
       white-space: nowrap;
+      opacity: 0.8;
       font-variant-numeric: tabular-nums;
-      opacity: .8;
     }
 
-    .pager-buttons {
-      display: flex;
-      gap: 3px;
-      align-items: center;
-    }
-
-    .page-input {
-      width: 56px;
-      padding: 3px 6px;
-      border-radius: 18px;
-      border: none;
-      background: #ffffff22;
-      color: #f5f5f5;
-      font: inherit;
-      text-align: center;
-      -moz-appearance: textfield;
-    }
-    .page-input::-webkit-outer-spin-button,
-    .page-input::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-
-    @media (max-width: 480px) {
-      .reader {
-        border-radius: 10px;
-        padding: 8px 6px 12px;
-      }
-      h1 { font-size: 1.45em; }
+    @media(max-width:480px){
+      header h1 { font-size: 1.45em; }
       .page-wrapper { height: calc(100vh - 120px); }
     }
   </style>
@@ -200,18 +164,19 @@
 <body>
   <div class="shell">
     <article class="reader">
-      <!-- ШАПКА: будет видна только на первой "странице" -->
+
+      <!-- Шапка — только на первой странице -->
       <header id="bookHeader">
-        <h1>Украдене щастя</h1> <!-- ← 2. ПОМЕНЯЙ -->
-        <div class="book-subtitle">Іван Франко</div> <!-- ← 2. ПОМЕНЯЙ -->
-        <div class="book-meta">Класична література · публічне надбання</div>
+        <h1>Украдене щастя</h1> <!-- ← поменяй -->
+        <div class="book-subtitle">Іван Франко</div> <!-- ← поменяй -->
+        <div class="book-meta">Класична література • публічне надбання</div>
       </header>
 
-      <!-- ОДИН ЕДИНЫЙ ТЕКСТ, без нарезки -->
       <div class="page-wrapper" id="pageWrapper">
         <div class="book-content" id="bookContent">
-          <!-- 🔽🔽🔽 СЮДА ВСТАВЛЯЕШЬ ТЕКСТ КНИГИ 🔽🔽🔽 -->
-<p>ДРАМА З СІЛЬСЬКОГО ЖИТТЯ в 5 діях.</p>
+
+          <!-- 🔽🔽🔽 ВСТАВЬ ТЕКСТ КНИГИ СЮДА 🔽🔽🔽 -->
+         <p>ДРАМА З СІЛЬСЬКОГО ЖИТТЯ в 5 діях.</p>
 <blockquote class="cita" style='text-align:left'><p>ДІЙОВІ ОСОБИ:</p>
 <p>
 Микола Задорожний, чоловік, літ 45, невеликого росту, похилий, рухи повільні.</p>
@@ -2239,34 +2204,37 @@
 Микола. Анно, вспокійся, хіба ти не маєш для кого жити?</p>
 <p>
 Заслона спадає</p>
-          <!-- 🔼🔼🔼 ДО СЮДА ТЕКСТ КНИГИ 🔼🔼🔼 -->
+          <!-- 🔼🔼🔼 ДО СЮДА 🔼🔼🔼 -->
+
         </div>
       </div>
+
     </article>
   </div>
 
-  <!-- Нижняя панель управления -->
+  <!-- Нижняя панель -->
   <div class="controls">
     <div class="controls-left">
       <button class="btn" id="fontMinus">A−</button>
       <button class="btn" id="fontPlus">A+</button>
-      <span id="fontLabel" style="opacity:.75">18px</span>
+      <span id="fontLabel" style="opacity:.7">18px</span>
     </div>
+
     <div class="controls-right">
       <div class="pager-buttons">
         <button class="btn" id="prevPage">◀</button>
         <button class="btn" id="nextPage">▶</button>
       </div>
-      <input class="page-input" id="pageInput" type="number" min="1" value="1" />
       <span class="page-indicator" id="pageLabel">1 / 1 · 0%</span>
       <button class="btn btn-toggle" id="themeToggle">🌙</button>
     </div>
   </div>
 
   <script>
-    (function () {
-      // 3. УНИКАЛЬНЫЙ ID КНИГИ (только латиница, без пробелов)
-      var BOOK_ID = "ukradene_shchastia"; // ← ПОМЕНЯЙ, напр. "kajdasheva-simia"
+    (function(){
+
+      /* УНИКАЛЬНЫЙ ID (латиницей, для сохранения прогресса) */
+      var BOOK_ID = "ukradene_shchastia"; /* ← поменяй */
 
       var root = document.documentElement;
       var body = document.body;
@@ -2280,7 +2248,6 @@
       var prevBtn = document.getElementById("prevPage");
       var nextBtn = document.getElementById("nextPage");
       var pageLabel = document.getElementById("pageLabel");
-      var pageInput = document.getElementById("pageInput");
 
       var fontSize = 18;
       var saveKey = "book_scroll_" + BOOK_ID;
@@ -2290,155 +2257,96 @@
         var full = wrapper.scrollHeight || h;
         var maxScroll = Math.max(full - h, 1);
         var top = wrapper.scrollTop || 0;
-        var pageHeight = h;
-        var totalPages = Math.max(1, Math.ceil(full / pageHeight));
-        var currentPage = Math.max(1, Math.min(totalPages, Math.floor(top / pageHeight) + 1));
-        var percent = Math.round((top / maxScroll) * 100);
-        return { top, h, full, maxScroll, totalPages, currentPage, percent };
+        return {
+          top,
+          h,
+          full,
+          maxScroll,
+          total: Math.max(1, Math.ceil(full / h)),
+          current: Math.max(1, Math.min(Math.ceil(full / h), Math.floor(top / h) + 1)),
+          percent: Math.round((top / maxScroll) * 100)
+        };
       }
 
-      function updatePageInfo() {
-        var st = getState();
-        pageLabel.textContent = st.currentPage + " / " + st.totalPages + " · " + st.percent + "%";
+      function updateInfo() {
+        var s = getState();
+        pageLabel.textContent = s.current + " / " + s.total + " · " + s.percent + "%";
 
-        // Автор + название показываем только на первой "странице"
-        if (bookHeader) {
-          bookHeader.style.display = (st.currentPage === 1) ? "block" : "none";
-        }
-
-        if (pageInput) {
-          pageInput.min = 1;
-          pageInput.max = st.totalPages;
-          pageInput.value = st.currentPage;
-        }
+        bookHeader.style.display = (s.current === 1) ? "block" : "none";
       }
 
-      function applyFont() {
-        root.style.setProperty("--font-size", fontSize + "px");
-        fontLabel.textContent = fontSize + "px";
-        // после смены шрифта пересчитаем страницы/проценты
-        setTimeout(updatePageInfo, 50);
-      }
-
-      function saveStateDebounced() {
-        if (saveStateDebounced._t) clearTimeout(saveStateDebounced._t);
-        saveStateDebounced._t = setTimeout(function () {
-          var st = getState();
-          try {
-            localStorage.setItem(saveKey, JSON.stringify({
-              fraction: st.top / st.maxScroll,
-              ts: Date.now()
-            }));
-          } catch (e) {}
-        }, 250);
+      function saveState() {
+        var s = getState();
+        try {
+          localStorage.setItem(saveKey, JSON.stringify({
+            fraction: s.top / s.maxScroll
+          }));
+        } catch(e){}
       }
 
       function restoreState() {
-        var raw = null;
-        try {
-          raw = localStorage.getItem(saveKey);
-        } catch (e) {}
-        if (!raw) {
-          updatePageInfo();
-          return;
-        }
+        var raw = localStorage.getItem(saveKey);
+        if (!raw) return updateInfo();
+
         var data;
-        try {
-          data = JSON.parse(raw);
-        } catch (e) {
-          updatePageInfo();
-          return;
-        }
-        if (!data || typeof data.fraction !== "number") {
-          updatePageInfo();
-          return;
-        }
-        var frac = Math.max(0, Math.min(1, data.fraction));
+        try { data = JSON.parse(raw); } catch(e){ return updateInfo(); }
+
+        var frac = Math.max(0, Math.min(1, data.fraction || 0));
         var h = wrapper.clientHeight || 1;
         var full = wrapper.scrollHeight || h;
         var maxScroll = Math.max(full - h, 1);
         wrapper.scrollTop = frac * maxScroll;
-        updatePageInfo();
+
+        updateInfo();
       }
 
-      function goToPageIndex(target) {
-        var st = getState();
+      function goPage(delta) {
+        var s = getState();
+        var target = s.current + delta;
         if (target < 1) target = 1;
-        if (target > st.totalPages) target = st.totalPages;
-        var newTop = (target - 1) * st.h;
-        wrapper.scrollTo({ top: newTop, behavior: "smooth" });
-        setTimeout(function () {
-          updatePageInfo();
-          saveStateDebounced();
-        }, 350);
+        if (target > s.total) target = s.total;
+        wrapper.scrollTo({ top: (target - 1) * s.h, behavior: "smooth" });
+        setTimeout(updateInfo, 350);
       }
 
-      function goToPageDelta(delta) {
-        var st = getState();
-        goToPageIndex(st.currentPage + delta);
-      }
-
-      function jumpToInputPage() {
-        if (!pageInput) return;
-        var st = getState();
-        var val = parseInt(pageInput.value, 10);
-        if (isNaN(val)) return;
-        if (val < 1) val = 1;
-        if (val > st.totalPages) val = st.totalPages;
-        goToPageIndex(val);
-      }
-
-      // события
-      fontMinus.addEventListener("click", function () {
+      fontMinus.onclick = function(){
         if (fontSize > 14) {
           fontSize -= 2;
-          applyFont();
+          root.style.setProperty("--font-size", fontSize + "px");
+          fontLabel.textContent = fontSize + "px";
+          setTimeout(updateInfo, 50);
         }
+      };
+
+      fontPlus.onclick = function(){
+        if (fontSize < 28) {
+          fontSize += 2;
+          root.style.setProperty("--font-size", fontSize + "px");
+          fontLabel.textContent = fontSize + "px";
+          setTimeout(updateInfo, 50);
+        }
+      };
+
+      themeToggle.onclick = function(){
+        var dark = body.classList.toggle("dark");
+        themeToggle.textContent = dark ? "☀️" : "🌙";
+        themeToggle.classList.toggle("active", dark);
+      };
+
+      prevBtn.onclick = function(){ goPage(-1); };
+      nextBtn.onclick = function(){ goPage(1); };
+
+      wrapper.addEventListener("scroll", function(){
+        updateInfo();
+        saveState();
       });
 
-      fontPlus.addEventListener("click", function () {
-        if (fontSize >= 28) return;
-        fontSize += 2;
-        applyFont();
-      });
+      window.addEventListener("resize", restoreState);
 
-      themeToggle.addEventListener("click", function () {
-        var isDark = body.classList.toggle("dark");
-        themeToggle.textContent = isDark ? "☀️" : "🌙";
-        themeToggle.classList.toggle("active", isDark);
-      });
+      /* Старт */
+      updateInfo();
+      window.addEventListener("load", restoreState);
 
-      prevBtn.addEventListener("click", function () {
-        goToPageDelta(-1);
-      });
-
-      nextBtn.addEventListener("click", function () {
-        goToPageDelta(1);
-      });
-
-      if (pageInput) {
-        pageInput.addEventListener("keydown", function (e) {
-          if (e.key === "Enter") {
-            jumpToInputPage();
-          }
-        });
-        pageInput.addEventListener("blur", jumpToInputPage);
-      }
-
-      wrapper.addEventListener("scroll", function () {
-        updatePageInfo();
-        saveStateDebounced();
-      });
-
-      window.addEventListener("resize", function () {
-        restoreState();
-      });
-
-      // старт
-      applyFont();
-      window.addEventListener("load", function () {
-        restoreState();
-      });
     })();
   </script>
 </body>
