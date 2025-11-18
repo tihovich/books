@@ -2,12 +2,12 @@
 <html lang="uk">
 <head>
   <meta charset="utf-8" />
-  <title>Кайдашева сім'я — Іван Нечуй-Левицький</title>
+  <title>Кайдашева сім'я — Іван Нечуй-Левицький</title> 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
     :root {
-      --bg: #f3e7d3;          /* сепія */
+      --bg: #f3e7d3;
       --fg: #3b2b20;
       --paper: #fdf6e3;
       --accent: #b87333;
@@ -38,7 +38,7 @@
 
     .shell {
       min-height: 100vh;
-      padding: 8px 6px 66px; /* нижняя панель */
+      padding: 8px 6px 66px; /* место под нижнюю панель */
       display: flex;
       justify-content: center;
     }
@@ -76,32 +76,17 @@
       opacity: 0.8;
     }
 
+    /* КОНТЕЙНЕР ПРОКРУТКИ (страница) */
     .page-wrapper {
-      position: relative;
       flex: 1;
       border-radius: 10px;
       padding: 4px 4px 2px;
-      overflow: hidden;
-      /* высота страницы: адаптация под мобильный экран */
       max-height: min(72vh, 520px);
+      overflow-y: auto;
+      scroll-behavior: smooth;
     }
 
-    .book-page {
-      position: absolute;
-      inset: 0;
-      padding: 2px 6px 4px;
-      overflow: hidden;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.18s ease-out;
-    }
-
-    .book-page.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .book-page p {
+    .book-content p {
       margin: 0 0 0.9em;
       text-align: justify;
     }
@@ -182,10 +167,6 @@
       align-items: center;
     }
 
-    .hidden-source {
-      display: none;
-    }
-
     @media (max-width: 480px) {
       .reader {
         border-radius: 10px;
@@ -206,16 +187,13 @@
         <div class="book-meta">Повість · публічне надбання</div>
       </header>
 
+      <!-- ОДИН ЕДИНЫЙ ТЕКСТ, без нарезки DOM -->
       <div class="page-wrapper" id="pageWrapper">
-        <!-- сюда JS нарежет страницы -->
-      </div>
+        <div class="book-content" id="bookContent">
+          <!-- 🔽🔽🔽 ТЕКСТ КНИГИ 🔽🔽🔽 -->
 
-      <!-- исходный текст книги, JS его нарежет по страницам -->
-      <div class="hidden-source" id="hiddenSource">
-        <!-- 🔽🔽🔽 ТЕКСТ КНИГИ 🔽🔽🔽 -->
-
-        <p class="dropcap"><strong>Повість.</strong> 
-<p>Недалеко от Богуслава, коло Росі, в довгому покрученому яру розкинулось село Семигори. Яр в'ється гадюкою між крутими горами, між зеленими терасами; од яру на всі боки розбіглись, неначе гілки дерева, глибокі рукави й поховались десь далеко в густих лісах. На дні довгого яру блищать рядками ставочки в очеретах, в осоці, зеленіють левади. Греблі обсаджені столітніми вербами. В глибокому яру ніби в'ється оксамитовий зелений пояс, на котрому блищать ніби вправлені в зелену оправу прикраси з срібла. Два рядки білих хат попід горами біліють, неначе два рядки перлів на зеленому поясі. Коло хат зеленіють густі старі садки.</p>
+         <p>
+Недалеко от Богуслава, коло Росі, в довгому покрученому яру розкинулось село Семигори. Яр в'ється гадюкою між крутими горами, між зеленими терасами; од яру на всі боки розбіглись, неначе гілки дерева, глибокі рукави й поховались десь далеко в густих лісах. На дні довгого яру блищать рядками ставочки в очеретах, в осоці, зеленіють левади. Греблі обсаджені столітніми вербами. В глибокому яру ніби в'ється оксамитовий зелений пояс, на котрому блищать ніби вправлені в зелену оправу прикраси з срібла. Два рядки білих хат попід горами біліють, неначе два рядки перлів на зеленому поясі. Коло хат зеленіють густі старі садки.</p>
 <p>
 На високих гривах гір кругом яру зеленіє старий ліс, як зелене море, вкрите хвилями. Глянеш з високої гори на той ліс, і здається, ніби на гори впала оксамитова зелена тканка, гарно побгалась складками, позападала в вузькі долини тисячами оборок та жмутів. В гарячий ясний літній день ліс на горах сяє, а в долинах чорніє. Над долинами стоїть сизий легкий туман. Ті долини здалека ніби дишуть тобі в лице холодком, лісовою вогкістю, манять до себе в тінь густого старого лісу.</p>
 <p>
@@ -3525,7 +3503,8 @@ IХ</p>
 <p>
 1878 року</p>
 
-        <!-- 🔼🔼🔼 КОНЕЦ ТЕКСТА КНИГИ 🔼🔼🔼 -->
+          <!-- 🔼🔼🔼 КОНЕЦ ТЕКСТА КНИГИ 🔼🔼🔼 -->
+        </div>
       </div>
     </article>
   </div>
@@ -3546,269 +3525,149 @@ IХ</p>
     </div>
   </div>
 
-<script>
-  (function () {
-    // УНИКАЛЬНЫЙ ID КНИГИ — поменяй для каждой html-страницы
-    var BOOK_ID = "kaidasheva-simia"; // ← здесь своё ID для книги
+  <script>
+    (function () {
+      // УНИКАЛЬНЫЙ ID КНИГИ — ДЛЯ localStorage
+      var BOOK_ID = "kajdasheva";
 
-    var root = document.documentElement;
-    var body = document.body;
-    var wrapper = document.getElementById("pageWrapper");
-    var source = document.getElementById("hiddenSource");
+      var root = document.documentElement;
+      var body = document.body;
+      var wrapper = document.getElementById("pageWrapper");
 
-    var fontMinus = document.getElementById("fontMinus");
-    var fontPlus = document.getElementById("fontPlus");
-    var fontLabel = document.getElementById("fontLabel");
-    var themeToggle = document.getElementById("themeToggle");
-    var prevBtn = document.getElementById("prevPage");
-    var nextBtn = document.getElementById("nextPage");
-    var pageLabel = document.getElementById("pageLabel");
+      var fontMinus = document.getElementById("fontMinus");
+      var fontPlus = document.getElementById("fontPlus");
+      var fontLabel = document.getElementById("fontLabel");
+      var themeToggle = document.getElementById("themeToggle");
+      var prevBtn = document.getElementById("prevPage");
+      var nextBtn = document.getElementById("nextPage");
+      var pageLabel = document.getElementById("pageLabel");
 
-    var fontSize = 18;
-    var pages = [];
-    var currentPage = 0;
-    var saveKey = "book_page_" + BOOK_ID;
+      var fontSize = 18;
+      var saveKey = "book_scroll_" + BOOK_ID;
 
-    var sourceHTML = source.innerHTML; // оригинальный текст
+      function applyFont() {
+        root.style.setProperty("--font-size", fontSize + "px");
+        fontLabel.textContent = fontSize + "px";
+        updatePageInfo();
+      }
 
-    function applyFont() {
-      root.style.setProperty("--font-size", fontSize + "px");
-      fontLabel.textContent = fontSize + "px";
-    }
+      function getState() {
+        var h = wrapper.clientHeight || 1;
+        var full = wrapper.scrollHeight || h;
+        var maxScroll = Math.max(full - h, 1);
+        var top = wrapper.scrollTop || 0;
+        var pageHeight = h;
+        var totalPages = Math.max(1, Math.ceil(full / pageHeight));
+        var currentPage = Math.max(1, Math.min(totalPages, Math.floor(top / pageHeight) + 1));
+        var percent = Math.round((top / maxScroll) * 100);
+        return { top, h, full, maxScroll, totalPages, currentPage, percent };
+      }
 
-    function newPage() {
-      var page = document.createElement("div");
-      page.className = "book-page";
-      wrapper.appendChild(page);
-      pages.push(page);
-      return page;
-    }
+      function updatePageInfo() {
+        var st = getState();
+        pageLabel.textContent = st.currentPage + " / " + st.totalPages + " · " + st.percent + "%";
+      }
 
-    function updatePageLabel() {
-      var total = Math.max(pages.length, 1);
-      var n = currentPage + 1;
-      var percent = Math.round((n / total) * 100);
-      pageLabel.textContent = n + " / " + total + " · " + percent + "%";
-    }
+      function saveStateDebounced() {
+        if (saveStateDebounced._t) clearTimeout(saveStateDebounced._t);
+        saveStateDebounced._t = setTimeout(function () {
+          var st = getState();
+          try {
+            localStorage.setItem(saveKey, JSON.stringify({
+              fraction: st.top / st.maxScroll,
+              ts: Date.now()
+            }));
+          } catch (e) {}
+        }, 250);
+      }
 
-    function savePage() {
-      try {
-        localStorage.setItem(saveKey, JSON.stringify({
-          page: currentPage,
-          ts: Date.now()
-        }));
-      } catch (e) {}
-    }
-
-    function restorePageIfAny() {
-      try {
-        var raw = localStorage.getItem(saveKey);
-        if (!raw) return;
-        var data = JSON.parse(raw);
-        if (!data || typeof data.page !== "number") return;
-        if (data.page < 0 || data.page >= pages.length) return;
-        currentPage = data.page;
-        pages.forEach(function (p, i) {
-          p.classList.toggle("active", i === currentPage);
-        });
-        updatePageLabel();
-      } catch (e) {}
-    }
-
-    function showPage(index) {
-      if (!pages.length) return;
-      if (index < 0) index = 0;
-      if (index >= pages.length) index = pages.length - 1;
-      pages.forEach(function (p, i) {
-        p.classList.toggle("active", i === index);
-      });
-      currentPage = index;
-      updatePageLabel();
-      savePage();
-    }
-
-    // ищем красивую точку разрыва (., ?, !, ;, ,)
-    function findNiceBreak(text) {
-      var punct = [".", "?", "!", ";", ","];
-      var best = -1;
-      punct.forEach(function (ch) {
-        var idx = text.lastIndexOf(ch);
-        if (idx > best) best = idx;
-      });
-      return best;
-    }
-
-    // ✂ Главное: аккуратно режем длинные абзацы на части по высоте
-    function paginateContent() {
-      wrapper.innerHTML = "";
-      pages = [];
-      currentPage = 0;
-
-      var tmp = document.createElement("div");
-      tmp.innerHTML = sourceHTML;
-      var nodes = Array.from(tmp.childNodes);
-
-      var page = newPage();
-
-      var maxHeight = wrapper.clientHeight || wrapper.offsetHeight || 400;
-      if (maxHeight < 250) maxHeight = 400;
-
-      function addElementNode(node) {
-        // блоки, которые не <p>, добавляем как есть
-        if (node.nodeType === Node.ELEMENT_NODE &&
-            node.tagName.toLowerCase() !== "p") {
-
-          var clone = node.cloneNode(true);
-          page.appendChild(clone);
-          if (page.scrollHeight > maxHeight) {
-            page.removeChild(clone);
-            page = newPage();
-            page.appendChild(clone);
-          }
+      function restoreState() {
+        var raw = null;
+        try {
+          raw = localStorage.getItem(saveKey);
+        } catch (e) {}
+        if (!raw) {
+          updatePageInfo();
           return;
         }
-
-        // абзацы режем на части
-        var text = node.textContent || "";
-        var className = "";
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          className = node.className || "";
-        }
-
-        var idx = 0;
-        var len = text.length;
-
-        while (idx < len) {
-          // базовый размер куска — побольше, чтобы страницы были плотнее
-          var chunkSize = Math.min(1500, len - idx);
-          var placed = false;
-
-          while (!placed && chunkSize > 80) {
-            var chunkText = text.slice(idx, idx + chunkSize);
-
-            // попробуем найти красивую точку разрыва
-            var niceIdx = findNiceBreak(chunkText);
-            if (niceIdx > 200) {
-              chunkText = chunkText.slice(0, niceIdx + 1);
-            }
-
-            var p = document.createElement("p");
-            if (className) p.className = className;
-            p.textContent = chunkText.trim();
-
-            page.appendChild(p);
-
-            if (page.scrollHeight > maxHeight) {
-              // не влезло — откат и новая страница
-              page.removeChild(p);
-              page = newPage();
-              page.appendChild(p);
-
-              // если даже на пустой странице не помещается —
-              // уменьшаем размер куска и пробуем ещё раз
-              if (page.scrollHeight > maxHeight) {
-                page.removeChild(p);
-                chunkSize = Math.floor(chunkSize * 0.7);
-                continue;
-              }
-            }
-
-            placed = true;
-            idx += chunkText.length;
-          }
-
-          if (!placed) {
-            // остаток очень короткий — просто добавим как есть
-            var last = document.createElement("p");
-            if (className) last.className = className;
-            last.textContent = text.slice(idx).trim();
-            page.appendChild(last);
-            idx = len;
-          }
-        }
-      }
-
-      nodes.forEach(function (node) {
-        if (node.nodeType === Node.TEXT_NODE &&
-            !node.textContent.trim()) {
+        var data;
+        try {
+          data = JSON.parse(raw);
+        } catch (e) {
+          updatePageInfo();
           return;
         }
-        if (node.nodeType === Node.TEXT_NODE) {
-          var p = document.createElement("p");
-          p.textContent = node.textContent;
-          addElementNode(p);
-        } else if (node.nodeType === Node.ELEMENT_NODE) {
-          addElementNode(node);
+        if (!data || typeof data.fraction !== "number") {
+          updatePageInfo();
+          return;
+        }
+        var frac = Math.max(0, Math.min(1, data.fraction));
+        var h = wrapper.clientHeight || 1;
+        var full = wrapper.scrollHeight || h;
+        var maxScroll = Math.max(full - h, 1);
+        wrapper.scrollTop = frac * maxScroll;
+        updatePageInfo();
+      }
+
+      function goToPage(delta) {
+        var st = getState();
+        var target = st.currentPage + delta;
+        if (target < 1) target = 1;
+        if (target > st.totalPages) target = st.totalPages;
+        var newTop = (target - 1) * st.h;
+        wrapper.scrollTo({ top: newTop, behavior: "smooth" });
+        // немного подождём, потом обновим и сохраним
+        setTimeout(function () {
+          updatePageInfo();
+          saveStateDebounced();
+        }, 350);
+      }
+
+      // события
+      fontMinus.addEventListener("click", function () {
+        if (fontSize > 14) {
+          fontSize -= 2;
+          applyFont();
         }
       });
 
-      // 🔍 Убираем пустые страницы (без текста)
-      var cleaned = [];
-      pages.forEach(function (p) {
-        if (p.textContent.trim().length === 0) {
-          wrapper.removeChild(p);
-        } else {
-          cleaned.push(p);
-        }
-      });
-      pages = cleaned;
-      if (!pages.length) {
-        pages.push(newPage());
-      }
-
-      pages.forEach(function (p, i) {
-        p.classList.toggle("active", i === 0);
-      });
-      currentPage = 0;
-      updatePageLabel();
-      restorePageIfAny();
-    }
-
-    // События управления
-    fontMinus.addEventListener("click", function () {
-      if (fontSize > 14) {
-        fontSize -= 2;
-        applyFont();
-        setTimeout(paginateContent, 60);
-      }
-    });
-
-    fontPlus.addEventListener("click", function () {
-      if (fontSize < 26) {
+      fontPlus.addEventListener("click", function () {
+        if (fontSize > 28) return;
         fontSize += 2;
         applyFont();
-        setTimeout(paginateContent, 60);
-      }
-    });
+      });
 
-    themeToggle.addEventListener("click", function () {
-      var isDark = body.classList.toggle("dark");
-      themeToggle.textContent = isDark ? "☀️" : "🌙";
-      themeToggle.classList.toggle("active", isDark);
-    });
+      themeToggle.addEventListener("click", function () {
+        var isDark = body.classList.toggle("dark");
+        themeToggle.textContent = isDark ? "☀️" : "🌙";
+        themeToggle.classList.toggle("active", isDark);
+      });
 
-    prevBtn.addEventListener("click", function () {
-      showPage(currentPage - 1);
-    });
+      prevBtn.addEventListener("click", function () {
+        goToPage(-1);
+      });
 
-    nextBtn.addEventListener("click", function () {
-      showPage(currentPage + 1);
-    });
+      nextBtn.addEventListener("click", function () {
+        goToPage(1);
+      });
 
-    // запуск
-    applyFont();
+      wrapper.addEventListener("scroll", function () {
+        updatePageInfo();
+        saveStateDebounced();
+      });
 
-    window.addEventListener("load", function () {
-      paginateContent();
-    });
+      window.addEventListener("resize", function () {
+        // при изменении размеров пытаемся восстановить позицию по доле
+        restoreState();
+      });
 
-    window.addEventListener("resize", function () {
-      clearTimeout(window._resizeTimer);
-      window._resizeTimer = setTimeout(function () {
-        paginateContent();
-      }, 200);
-    });
-  })();
-</script>
+      // старт
+      applyFont();
+      // небольшая задержка, чтобы DOM дорендерился
+      window.addEventListener("load", function () {
+        restoreState();
+      });
+    })();
+  </script>
 </body>
 </html>
