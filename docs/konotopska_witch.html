@@ -39,10 +39,11 @@
 
     .shell {
       min-height: 100vh;
-      padding: 4px 0 80px; /* запас под футер */
+      padding: 4px 0 0;   /* раньше было 4px 0 66px */
       display: flex;
       justify-content: center;
     }
+
 
     .reader {
       background: var(--paper);
@@ -82,7 +83,6 @@
       flex: 1;
       border-radius: 10px;
       padding: 2px 4px;
-      /* больше НЕ задаём фиксированную высоту и scroll */
       height: auto;
       max-height: none;
       overflow: visible;
@@ -1249,9 +1249,9 @@ I пану Халявському з його жiнкою не минулося;
     </div>
   </div>
 
- <script>
+<script>
   (function () {
-    // УНИКАЛЬНЫЙ ID книги (латиницей)
+    // УНИКАЛЬНЫЙ ID книги
     var BOOK_ID = "konotopska_witch"; // ← поменяй под конкретную книгу
 
     var root = document.documentElement;
@@ -1270,18 +1270,24 @@ I пану Халявському з його жiнкою не минулося;
 
     var fontSize = 18;
     var saveKey = "book_scroll_" + BOOK_ID;
+    var footerHeight = 0;
+    var OVERLAP_PX = 40; // перекрытие между страницами (можешь менять)
+
+    function measureFooter() {
+      footerHeight = controls ? (controls.offsetHeight || 0) : 0;
+      body.style.paddingBottom = (footerHeight + 8) + "px";
+    }
 
     function getState() {
       var winH = window.innerHeight || 1;
-      var footerH = controls ? controls.offsetHeight : 0;
-      var pageH = Math.max(200, winH - footerH); // высота «страницы»
+      var pageH = Math.max(200, winH - footerHeight); // высота видимой "страницы"
 
       var doc = document.documentElement;
       var full = doc.scrollHeight;
       var top = window.scrollY || doc.scrollTop || 0;
       var maxScroll = Math.max(full - winH, 1);
 
-      var totalPages = Math.max(1, Math.ceil((full - footerH) / pageH));
+      var totalPages = Math.max(1, Math.ceil((full - footerHeight) / pageH));
       var currentPage = Math.max(
         1,
         Math.min(totalPages, Math.floor(top / pageH) + 1)
@@ -1305,7 +1311,7 @@ I пану Халявському з його жiнкою не минулося;
         s.current + " / " + s.total + " · " + s.percent + "%";
 
       if (bookHeader) {
-        bookHeader.style.display = s.current === 1 ? "block" : "none";
+        bookHeader.style.display = (s.current === 1) ? "block" : "none";
       }
     }
 
@@ -1361,7 +1367,15 @@ I пану Халявському з його жiнкою не минулося;
       var target = s.current + delta;
       if (target < 1) target = 1;
       if (target > s.total) target = s.total;
-      var newTop = (target - 1) * s.pageH;
+
+      var newTop = (target - 1) * s.pageH - OVERLAP_PX;
+      if (newTop < 0) newTop = 0;
+
+      var doc = document.documentElement;
+      var winH = window.innerHeight || 1;
+      var maxScroll = Math.max(doc.scrollHeight - winH, 0);
+      if (newTop > maxScroll) newTop = maxScroll;
+
       window.scrollTo({ top: newTop, behavior: "smooth" });
       setTimeout(function () {
         updateInfo();
@@ -1373,12 +1387,13 @@ I пану Халявському з його жiнкою не минулося;
       root.style.setProperty("--font-size", fontSize + "px");
       fontLabel.textContent = fontSize + "px";
       setTimeout(function () {
+        measureFooter();
         updateInfo();
-        restoreState(); // пересчитать позицию под новый размер
+        restoreState();
       }, 80);
     }
 
-    // События
+    // события
     fontMinus.addEventListener("click", function () {
       if (fontSize > 14) {
         fontSize -= 2;
@@ -1413,16 +1428,20 @@ I пану Халявському з його жiнкою не минулося;
     });
 
     window.addEventListener("resize", function () {
+      measureFooter();
       restoreState();
     });
 
     // Старт
+    measureFooter();
     applyFont();
     window.addEventListener("load", function () {
+      measureFooter();
       restoreState();
     });
   })();
 </script>
+
 
 </body>
 </html>
