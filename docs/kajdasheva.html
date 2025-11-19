@@ -78,10 +78,13 @@
     }
 
     /* ВНУТРЕННЯЯ ОБЛАСТЬ ПРОКРУТКИ */
+    /* ВНУТРЕННЯЯ ОБЛАСТЬ ПРОКРУТКИ */
     .page-wrapper {
-      flex: 0 0 auto;        /* не растягиваемся, высоту задаём из JS */
+      flex: 1;
       border-radius: 10px;
       padding: 2px 4px;
+      height: calc(100vh - 150px);      /* фиксируем высоту зоны чтения */
+      max-height: calc(100vh - 150px);  /* чтобы не растягивалась */
       overflow-y: auto;
       scroll-behavior: smooth;
     }
@@ -3511,197 +3514,181 @@ IХ</p>
     </div>
   </div>
 
-  <script>
-    (function () {
-      // УНИКАЛЬНЫЙ ID для книги (латиницей!)
-      var BOOK_ID = "kajdasheva";
+ <script>
+  (function () {
+    // УНИКАЛЬНЫЙ ID для книги (латиницей!)
+    var BOOK_ID = "kajdasheva";
 
-      var root = document.documentElement;
-      var body = document.body;
-      var wrapper = document.getElementById("pageWrapper");
-      var bookHeader = document.getElementById("bookHeader");
-      var controls = document.querySelector(".controls");
+    var root = document.documentElement;
+    var body = document.body;
+    var wrapper = document.getElementById("pageWrapper");
+    var bookHeader = document.getElementById("bookHeader");
 
-      var fontMinus = document.getElementById("fontMinus");
-      var fontPlus = document.getElementById("fontPlus");
-      var fontLabel = document.getElementById("fontLabel");
-      var themeToggle = document.getElementById("themeToggle");
-      var prevBtn = document.getElementById("prevPage");
-      var nextBtn = document.getElementById("nextPage");
-      var pageLabel = document.getElementById("pageLabel");
+    var fontMinus = document.getElementById("fontMinus");
+    var fontPlus = document.getElementById("fontPlus");
+    var fontLabel = document.getElementById("fontLabel");
+    var themeToggle = document.getElementById("themeToggle");
+    var prevBtn = document.getElementById("prevPage");
+    var nextBtn = document.getElementById("nextPage");
+    var pageLabel = document.getElementById("pageLabel");
 
-      var fontSize = 18;
-      var saveKey = "book_scroll_" + BOOK_ID;
-      var OVERLAP_PX = 24; // перекрытие между страницами
+    var fontSize = 18;
+    var saveKey = "book_scroll_" + BOOK_ID;
+    var OVERLAP_PX = 24; // сколько строк перекрываем при листании
 
-      // 🔹 Динамически считаем высоту области чтения,
-      //    чтобы она точно заканчивалась над футером
-      function measureLayout() {
-        var winH = window.innerHeight || document.documentElement.clientHeight || 600;
-        var headerH = bookHeader ? bookHeader.offsetHeight : 0;
-        var footerH = controls ? controls.offsetHeight : 0;
-        var padding = 16; // небольшой запас
+    function getDims() {
+      var h = wrapper.clientHeight || 1;
+      var full = wrapper.scrollHeight || h;
+      var maxScroll = Math.max(full - h, 0);
+      var top = wrapper.scrollTop || 0;
 
-        var available = winH - headerH - footerH - padding;
-        if (available < 220) available = 220;
+      var totalPages = Math.max(1, Math.ceil(full / h));
+      var currentPage = Math.max(
+        1,
+        Math.min(totalPages, Math.floor(top / h) + 1)
+      );
+      var percent = maxScroll > 0 ? Math.round((top / maxScroll) * 100) : 0;
 
-        wrapper.style.height = available + "px";
-        wrapper.style.maxHeight = available + "px";
+      return { h, full, maxScroll, top, totalPages, currentPage, percent };
+    }
+
+    function updateInfo() {
+      var s = getDims();
+      pageLabel.textContent =
+        s.currentPage + " / " + s.totalPages + " · " + s.percent + "%";
+
+      // шапка только в самом начале
+      if (bookHeader) {
+        bookHeader.style.display = (s.top < 10) ? "block" : "none";
       }
+    }
 
-      function getState() {
-        var h = wrapper.clientHeight || 1;
-        var full = wrapper.scrollHeight || h;
-        var maxScroll = Math.max(full - h, 1);
-        var top = wrapper.scrollTop || 0;
-
-        var totalPages = Math.max(1, Math.ceil(full / h));
-        var currentPage = Math.max(
-          1,
-          Math.min(totalPages, Math.floor(top / h) + 1)
-        );
-        var percent = Math.round((top / maxScroll) * 100);
-
-        return {
-          top: top,
-          h: h,
-          full: full,
-          maxScroll: maxScroll,
-          total: totalPages,
-          current: currentPage,
-          percent: percent
-        };
-      }
-
-      function updateInfo() {
-        var s = getState();
-        pageLabel.textContent =
-          s.current + " / " + s.total + " · " + s.percent + "%";
-
-        if (bookHeader) {
-          bookHeader.style.display = (s.current === 1) ? "block" : "none";
-        }
-      }
-
-      function saveStateDebounced() {
-        if (saveStateDebounced._t) clearTimeout(saveStateDebounced._t);
-        saveStateDebounced._t = setTimeout(function () {
-          var s = getState();
-          try {
-            localStorage.setItem(
-              saveKey,
-              JSON.stringify({ fraction: s.top / s.maxScroll })
-            );
-          } catch (e) {}
-        }, 250);
-      }
-
-      function restoreState() {
-        var raw = null;
+    function saveStateDebounced() {
+      if (saveStateDebounced._t) clearTimeout(saveStateDebounced._t);
+      saveStateDebounced._t = setTimeout(function () {
+        var s = getDims();
+        var frac = s.maxScroll > 0 ? s.top / s.maxScroll : 0;
         try {
-          raw = localStorage.getItem(saveKey);
+          localStorage.setItem(
+            saveKey,
+            JSON.stringify({ fraction: frac })
+          );
         } catch (e) {}
+      }, 250);
+    }
 
-        if (!raw) {
-          updateInfo();
-          return;
-        }
+    function restoreState() {
+      var raw;
+      try {
+        raw = localStorage.getItem(saveKey);
+      } catch (e) {
+        raw = null;
+      }
 
-        var data;
-        try {
-          data = JSON.parse(raw);
-        } catch (e) {
-          updateInfo();
-          return;
-        }
-
-        if (!data || typeof data.fraction !== "number") {
-          updateInfo();
-          return;
-        }
-
-        var sNow = getState();
-        var maxScroll = sNow.maxScroll;
-        var frac = Math.max(0, Math.min(1, data.fraction));
-        wrapper.scrollTop = frac * maxScroll;
+      if (!raw) {
         updateInfo();
+        return;
       }
 
-      function goPage(delta) {
-        var s = getState();
-        var target = s.current + delta;
-        if (target < 1) target = 1;
-        if (target > s.total) target = s.total;
-
-        var newTop = (target - 1) * s.h - OVERLAP_PX;
-        if (newTop < 0) newTop = 0;
-        if (newTop > s.maxScroll) newTop = s.maxScroll;
-
-        wrapper.scrollTo({ top: newTop, behavior: "smooth" });
-
-        setTimeout(function () {
-          updateInfo();
-          saveStateDebounced();
-        }, 300);
+      var data;
+      try {
+        data = JSON.parse(raw);
+      } catch (e) {
+        updateInfo();
+        return;
       }
 
-      function applyFont() {
-        root.style.setProperty("--font-size", fontSize + "px");
-        fontLabel.textContent = fontSize + "px";
-        setTimeout(function () {
-          measureLayout();
-          restoreState();
-          updateInfo();
-        }, 80);
+      if (!data || typeof data.fraction !== "number") {
+        updateInfo();
+        return;
       }
 
-      // события
-      fontMinus.addEventListener("click", function () {
-        if (fontSize > 14) {
-          fontSize -= 2;
-          applyFont();
-        }
-      });
+      var s = getDims();
+      var frac = Math.max(0, Math.min(1, data.fraction));
+      var targetTop = frac * s.maxScroll;
 
-      fontPlus.addEventListener("click", function () {
-        if (fontSize < 28) {
-          fontSize += 2;
-          applyFont();
-        }
-      });
+      wrapper.scrollTop = targetTop;
+      updateInfo();
+    }
 
-      themeToggle.addEventListener("click", function () {
-        var dark = body.classList.toggle("dark");
-        themeToggle.textContent = dark ? "☀️" : "🌙";
-        themeToggle.classList.toggle("active", dark);
-      });
+    function goDelta(direction) {
+      var s = getDims();
+      if (s.maxScroll <= 0) return;
 
-      prevBtn.addEventListener("click", function () {
-        goPage(-1);
-      });
+      var step = s.h - OVERLAP_PX;  // листаем на высоту окна минус перекрытие
+      if (step < 50) step = s.h;    // на всякий случай
 
-      nextBtn.addEventListener("click", function () {
-        goPage(1);
-      });
+      var newTop = s.top + direction * step;
+      if (newTop < 0) newTop = 0;
+      if (newTop > s.maxScroll) newTop = s.maxScroll;
 
-      wrapper.addEventListener("scroll", function () {
+      wrapper.scrollTo({ top: newTop, behavior: "smooth" });
+
+      setTimeout(function () {
         updateInfo();
         saveStateDebounced();
-      });
+      }, 300);
+    }
 
-      window.addEventListener("resize", function () {
-        measureLayout();
-        restoreState();
-      });
+    function applyFont() {
+      root.style.setProperty("--font-size", fontSize + "px");
+      fontLabel.textContent = fontSize + "px";
 
-      // старт
-      measureLayout();
-      applyFont();
-      window.addEventListener("load", function () {
-        measureLayout();
+      // после изменения размера шрифта даём браузеру отрендерить высоту
+      setTimeout(function () {
         restoreState();
-      });
-    })();
-  </script>
+        updateInfo();
+      }, 100);
+    }
+
+    // ----- события -----
+    fontMinus.addEventListener("click", function () {
+      if (fontSize > 14) {
+        fontSize -= 2;
+        applyFont();
+      }
+    });
+
+    fontPlus.addEventListener("click", function () {
+      if (fontSize < 28) {
+        fontSize += 2;
+        applyFont();
+      }
+    });
+
+    themeToggle.addEventListener("click", function () {
+      var dark = body.classList.toggle("dark");
+      themeToggle.textContent = dark ? "☀️" : "🌙";
+      themeToggle.classList.toggle("active", dark);
+    });
+
+    prevBtn.addEventListener("click", function () {
+      goDelta(-1);
+    });
+
+    nextBtn.addEventListener("click", function () {
+      goDelta(1);
+    });
+
+    wrapper.addEventListener("scroll", function () {
+      updateInfo();
+      saveStateDebounced();
+    });
+
+    window.addEventListener("resize", function () {
+      // просто пересчёт высоты и позицию подправим
+      setTimeout(function () {
+        restoreState();
+        updateInfo();
+      }, 100);
+    });
+
+    // старт
+    applyFont();
+    window.addEventListener("load", function () {
+      restoreState();
+    });
+  })();
+</script>
 </body>
 </html>
