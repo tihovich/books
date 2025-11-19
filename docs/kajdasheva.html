@@ -35,11 +35,12 @@
       font-size: var(--font-size);
       line-height: var(--line-height);
       -webkit-font-smoothing: antialiased;
+      overflow: hidden; /* ✳️ скроллим только внутренний контейнер */
     }
 
     .shell {
       min-height: 100vh;
-      padding: 4px 0 66px; /* место под футер */
+      padding: 4px 0 0; /* футер не учитываем, он fixed */
       display: flex;
       justify-content: center;
     }
@@ -78,10 +79,9 @@
 
     /* ВНУТРЕННЯЯ ОБЛАСТЬ ПРОКРУТКИ */
     .page-wrapper {
-      flex: 1;
+      flex: 0 0 auto;        /* не растягиваемся, высоту задаём из JS */
       border-radius: 10px;
       padding: 2px 4px;
-      max-height: calc(100vh - 150px); /* высота экрана минус шапка и футер */
       overflow-y: auto;
       scroll-behavior: smooth;
     }
@@ -158,7 +158,6 @@
     @media(max-width:480px){
       .reader { padding: 8px 6px 12px; }
       header h1 { font-size: 1.45em; }
-      .page-wrapper { max-height: calc(100vh - 150px); }
     }
   </style>
 </head>
@@ -176,9 +175,9 @@
       <!-- ВНУТРЕННИЙ СКРОЛЛ -->
       <div class="page-wrapper" id="pageWrapper">
         <div class="book-content" id="bookContent">
-          <!-- 🔽🔽🔽 СЮДА ВСТАВЬ ТЕКСТ КНИГИ 🔽🔽🔽 -->
+          <!-- 🔽🔽🔽 ТУТ ВЕСЬ ТЕКСТ КНИГИ 🔽🔽🔽 -->
 
-         <p>Повість</p>
+<p>Повість</p>
 <p>
 Недалеко от Богуслава, коло Росі, в довгому покрученому яру розкинулось село Семигори. Яр в'ється гадюкою між крутими горами, між зеленими терасами; од яру на всі боки розбіглись, неначе гілки дерева, глибокі рукави й поховались десь далеко в густих лісах. На дні довгого яру блищать рядками ставочки в очеретах, в осоці, зеленіють левади. Греблі обсаджені столітніми вербами. В глибокому яру ніби в'ється оксамитовий зелений пояс, на котрому блищать ніби вправлені в зелену оправу прикраси з срібла. Два рядки білих хат попід горами біліють, неначе два рядки перлів на зеленому поясі. Коло хат зеленіють густі старі садки.</p>
 <p>
@@ -3489,7 +3488,6 @@ IХ</p>
 Діло з грушею скінчилось несподівано.Груша всохла, і дві сім’ї помирились.В обох садибах настала мирнота й тиша.</p>
 <p>
 1878 року</p>
-
           <!-- 🔼🔼🔼 ДО СЮДА ТЕКСТ КНИГИ 🔼🔼🔼 -->
         </div>
       </div>
@@ -3522,6 +3520,7 @@ IХ</p>
       var body = document.body;
       var wrapper = document.getElementById("pageWrapper");
       var bookHeader = document.getElementById("bookHeader");
+      var controls = document.querySelector(".controls");
 
       var fontMinus = document.getElementById("fontMinus");
       var fontPlus = document.getElementById("fontPlus");
@@ -3533,7 +3532,22 @@ IХ</p>
 
       var fontSize = 18;
       var saveKey = "book_scroll_" + BOOK_ID;
-      var OVERLAP_PX = 24; // небольшое перекрытие между страницами
+      var OVERLAP_PX = 24; // перекрытие между страницами
+
+      // 🔹 Динамически считаем высоту области чтения,
+      //    чтобы она точно заканчивалась над футером
+      function measureLayout() {
+        var winH = window.innerHeight || document.documentElement.clientHeight || 600;
+        var headerH = bookHeader ? bookHeader.offsetHeight : 0;
+        var footerH = controls ? controls.offsetHeight : 0;
+        var padding = 16; // небольшой запас
+
+        var available = winH - headerH - footerH - padding;
+        if (available < 220) available = 220;
+
+        wrapper.style.height = available + "px";
+        wrapper.style.maxHeight = available + "px";
+      }
 
       function getState() {
         var h = wrapper.clientHeight || 1;
@@ -3635,6 +3649,7 @@ IХ</p>
         root.style.setProperty("--font-size", fontSize + "px");
         fontLabel.textContent = fontSize + "px";
         setTimeout(function () {
+          measureLayout();
           restoreState();
           updateInfo();
         }, 80);
@@ -3675,12 +3690,15 @@ IХ</p>
       });
 
       window.addEventListener("resize", function () {
+        measureLayout();
         restoreState();
       });
 
       // старт
+      measureLayout();
       applyFont();
       window.addEventListener("load", function () {
+        measureLayout();
         restoreState();
       });
     })();
