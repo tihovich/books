@@ -65,11 +65,12 @@
       max-height: calc(100vh - 150px);
       overflow-y: auto;
       scroll-behavior: smooth;
-      margin-bottom: 6px;               /* небольшой зазор над футером */
+      margin-bottom: 0;
+      padding-bottom: 20px; /* маленький буфер */               /* небольшой зазор над футером */
     }
 
     .book-content {
-      padding-bottom: 44px; /* запас, чтобы текст не залазил под футер */
+      padding-bottom: 16px; /* запас, чтобы текст не залазил под футер */
     }
 
     /* Титул как часть текста (в начале книги) */
