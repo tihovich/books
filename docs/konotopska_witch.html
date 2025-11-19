@@ -35,11 +35,12 @@
       font-size: var(--font-size);
       line-height: var(--line-height);
       -webkit-font-smoothing: antialiased;
+      overflow: hidden; /* скроллим только внутренний контейнер */
     }
 
     .shell {
       min-height: 100vh;
-      padding: 4px 0 66px; /* место под футер */
+      padding: 4px 0 0;
       display: flex;
       justify-content: center;
     }
@@ -56,12 +57,13 @@
       gap: 8px;
     }
 
-    header {
+    /* Заголовок как часть текста */
+    .book-title-block {
       text-align: center;
-      margin-bottom: 4px;
+      margin-bottom: 12px;
     }
 
-    header h1 {
+    .book-title-block h1 {
       margin: 0 0 6px;
       font-size: 1.6em;
     }
@@ -81,9 +83,11 @@
       flex: 1;
       border-radius: 10px;
       padding: 2px 4px;
-      max-height: calc(100vh - 150px); /* высота экрана минус шапка и футер */
+      height: calc(100vh - 150px);      /* высота зоны чтения */
+      max-height: calc(100vh - 150px);
       overflow-y: auto;
       scroll-behavior: smooth;
+      margin-bottom: 6px;               /* небольшой отступ над футером */
     }
 
     .book-content p {
@@ -157,8 +161,11 @@
 
     @media(max-width:480px){
       .reader { padding: 8px 6px 12px; }
-      header h1 { font-size: 1.45em; }
-      .page-wrapper { max-height: calc(100vh - 150px); }
+      .book-title-block h1 { font-size: 1.45em; }
+      .page-wrapper {
+        height: calc(100vh - 150px);
+        max-height: calc(100vh - 150px);
+      }
     }
   </style>
 </head>
@@ -166,17 +173,18 @@
 <body>
   <div class="shell">
     <article class="reader">
-      <!-- Шапка (только на первой "странице") -->
-      <header id="bookHeader">
+
+      <!-- Титул как часть текста -->
+      <div class="book-title-block">
         <h1>Конотопська відьма</h1>
         <div class="book-subtitle">Григорій Квітка-Основ'яненко</div>
         <div class="book-meta">Класична література • публічне надбання</div>
-      </header>
+      </div>
 
       <!-- ВНУТРЕННИЙ СКРОЛЛ -->
       <div class="page-wrapper" id="pageWrapper">
         <div class="book-content" id="bookContent">
-          <!-- 🔽🔽🔽 СЮДА ВСТАВЬ ТЕКСТ КНИГИ 🔽🔽🔽 -->
+          <!-- 🔽🔽🔽 ТУТ ВЕСЬ ТЕКСТ КНИГИ 🔽🔽🔽 -->
 
          <p>І</p>
 <p>
@@ -1217,13 +1225,11 @@ I пану Халявському з його жiнкою не минулося;
 
   <script>
     (function () {
-      // УНИКАЛЬНЫЙ ID для книги (латиницей!)
       var BOOK_ID = "konotopska_witch";
 
       var root = document.documentElement;
       var body = document.body;
       var wrapper = document.getElementById("pageWrapper");
-      var bookHeader = document.getElementById("bookHeader");
 
       var fontMinus = document.getElementById("fontMinus");
       var fontPlus = document.getElementById("fontPlus");
@@ -1235,12 +1241,12 @@ I пану Халявському з його жiнкою не минулося;
 
       var fontSize = 18;
       var saveKey = "book_scroll_" + BOOK_ID;
-      var OVERLAP_PX = 24; // небольшое перекрытие между страницами
+      var OVERLAP_PX = 24; // перекрытие между "страницами"
 
-      function getState() {
+      function getDims() {
         var h = wrapper.clientHeight || 1;
         var full = wrapper.scrollHeight || h;
-        var maxScroll = Math.max(full - h, 1);
+        var maxScroll = Math.max(full - h, 0);
         var top = wrapper.scrollTop || 0;
 
         var totalPages = Math.max(1, Math.ceil(full / h));
@@ -1248,47 +1254,33 @@ I пану Халявському з його жiнкою не минулося;
           1,
           Math.min(totalPages, Math.floor(top / h) + 1)
         );
-        var percent = Math.round((top / maxScroll) * 100);
+        var percent = maxScroll > 0 ? Math.round((top / maxScroll) * 100) : 0;
 
-        return {
-          top: top,
-          h: h,
-          full: full,
-          maxScroll: maxScroll,
-          total: totalPages,
-          current: currentPage,
-          percent: percent
-        };
+        return { h, full, maxScroll, top, totalPages, currentPage, percent };
       }
 
       function updateInfo() {
-        var s = getState();
+        var s = getDims();
         pageLabel.textContent =
-          s.current + " / " + s.total + " · " + s.percent + "%";
-
-        if (bookHeader) {
-          bookHeader.style.display = (s.current === 1) ? "block" : "none";
-        }
+          s.currentPage + " / " + s.totalPages + " · " + s.percent + "%";
       }
 
       function saveStateDebounced() {
         if (saveStateDebounced._t) clearTimeout(saveStateDebounced._t);
         saveStateDebounced._t = setTimeout(function () {
-          var s = getState();
+          var s = getDims();
+          var frac = s.maxScroll > 0 ? s.top / s.maxScroll : 0;
           try {
-            localStorage.setItem(
-              saveKey,
-              JSON.stringify({ fraction: s.top / s.maxScroll })
-            );
+            localStorage.setItem(saveKey, JSON.stringify({ fraction: frac }));
           } catch (e) {}
         }, 250);
       }
 
       function restoreState() {
-        var raw = null;
+        var raw;
         try {
           raw = localStorage.getItem(saveKey);
-        } catch (e) {}
+        } catch (e) { raw = null; }
 
         if (!raw) {
           updateInfo();
@@ -1296,32 +1288,28 @@ I пану Халявському з його жiнкою не минулося;
         }
 
         var data;
-        try {
-          data = JSON.parse(raw);
-        } catch (e) {
-          updateInfo();
-          return;
-        }
+        try { data = JSON.parse(raw); }
+        catch (e) { updateInfo(); return; }
 
         if (!data || typeof data.fraction !== "number") {
           updateInfo();
           return;
         }
 
-        var sNow = getState();
-        var maxScroll = sNow.maxScroll;
+        var s = getDims();
         var frac = Math.max(0, Math.min(1, data.fraction));
-        wrapper.scrollTop = frac * maxScroll;
+        wrapper.scrollTop = frac * s.maxScroll;
         updateInfo();
       }
 
-      function goPage(delta) {
-        var s = getState();
-        var target = s.current + delta;
-        if (target < 1) target = 1;
-        if (target > s.total) target = s.total;
+      function goDelta(direction) {
+        var s = getDims();
+        if (s.maxScroll <= 0) return;
 
-        var newTop = (target - 1) * s.h - OVERLAP_PX;
+        var step = s.h - OVERLAP_PX;
+        if (step < 50) step = s.h;
+
+        var newTop = s.top + direction * step;
         if (newTop < 0) newTop = 0;
         if (newTop > s.maxScroll) newTop = s.maxScroll;
 
@@ -1339,7 +1327,7 @@ I пану Халявському з його жiнкою не минулося;
         setTimeout(function () {
           restoreState();
           updateInfo();
-        }, 80);
+        }, 100);
       }
 
       // события
@@ -1364,11 +1352,11 @@ I пану Халявському з його жiнкою не минулося;
       });
 
       prevBtn.addEventListener("click", function () {
-        goPage(-1);
+        goDelta(-1);
       });
 
       nextBtn.addEventListener("click", function () {
-        goPage(1);
+        goDelta(1);
       });
 
       wrapper.addEventListener("scroll", function () {
@@ -1377,7 +1365,10 @@ I пану Халявському з його жiнкою не минулося;
       });
 
       window.addEventListener("resize", function () {
-        restoreState();
+        setTimeout(function () {
+          restoreState();
+          updateInfo();
+        }, 100);
       });
 
       // старт
