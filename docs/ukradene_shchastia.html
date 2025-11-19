@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
   <meta charset="utf-8" />
-  <title>Украдене щастя - Іван Франко</title> <!-- ← поменяй -->
+  <title>Украдене щастя - Іван Франко</title>
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
@@ -39,11 +39,10 @@
 
     .shell {
       min-height: 100vh;
-      padding: 4px 0 0;   /* раньше было 4px 0 66px */
+      padding: 4px 0 66px; /* место под футер */
       display: flex;
       justify-content: center;
     }
-
 
     .reader {
       background: var(--paper);
@@ -77,15 +76,15 @@
       opacity: 0.8;
     }
 
+    /* ВНУТРЕННЯЯ ОБЛАСТЬ ПРОКРУТКИ */
     .page-wrapper {
       flex: 1;
       border-radius: 10px;
       padding: 2px 4px;
-      height: auto;
-      max-height: none;
-      overflow: visible;
+      max-height: calc(100vh - 150px); /* высота экрана минус шапка и футер */
+      overflow-y: auto;
+      scroll-behavior: smooth;
     }
-
 
     .book-content p {
       margin: 0 0 0.9em;
@@ -108,7 +107,7 @@
       text-align: center;
     }
 
-    /* PANEL */
+    /* Нижняя панель */
     .controls {
       position: fixed;
       bottom: 0;
@@ -157,8 +156,9 @@
     }
 
     @media(max-width:480px){
+      .reader { padding: 8px 6px 12px; }
       header h1 { font-size: 1.45em; }
-      .page-wrapper { height: calc(100vh - 120px); }
+      .page-wrapper { max-height: calc(100vh - 150px); }
     }
   </style>
 </head>
@@ -166,18 +166,18 @@
 <body>
   <div class="shell">
     <article class="reader">
-
-      <!-- Шапка — только на первой странице -->
+      <!-- Шапка (только на первой "странице") -->
       <header id="bookHeader">
-        <h1>Украдене щастя</h1> <!-- ← поменяй -->
-        <div class="book-subtitle">Іван Франко</div> <!-- ← поменяй -->
+        <h1>Украдене щастя</h1>
+        <div class="book-subtitle">Іван Франко</div>
         <div class="book-meta">Класична література • публічне надбання</div>
       </header>
 
+      <!-- ВНУТРЕННИЙ СКРОЛЛ -->
       <div class="page-wrapper" id="pageWrapper">
         <div class="book-content" id="bookContent">
+          <!-- 🔽🔽🔽 СЮДА ВСТАВЬ ТЕКСТ КНИГИ 🔽🔽🔽 -->
 
-          <!-- 🔽🔽🔽 ВСТАВЬ ТЕКСТ КНИГИ СЮДА 🔽🔽🔽 -->
          <p>ДРАМА З СІЛЬСЬКОГО ЖИТТЯ в 5 діях.</p>
 <blockquote class="cita" style='text-align:left'><p>ДІЙОВІ ОСОБИ:</p>
 <p>
@@ -2206,22 +2206,20 @@
 Микола. Анно, вспокійся, хіба ти не маєш для кого жити?</p>
 <p>
 Заслона спадає</p>
-          <!-- 🔼🔼🔼 ДО СЮДА 🔼🔼🔼 -->
 
+          <!-- 🔼🔼🔼 ДО СЮДА ТЕКСТ КНИГИ 🔼🔼🔼 -->
         </div>
       </div>
-
     </article>
   </div>
 
-  <!-- Нижняя панель -->
+  <!-- Футер -->
   <div class="controls">
     <div class="controls-left">
       <button class="btn" id="fontMinus">A−</button>
       <button class="btn" id="fontPlus">A+</button>
       <span id="fontLabel" style="opacity:.7">18px</span>
     </div>
-
     <div class="controls-right">
       <div class="pager-buttons">
         <button class="btn" id="prevPage">◀</button>
@@ -2232,199 +2230,177 @@
     </div>
   </div>
 
-<script>
-  (function () {
-    // УНИКАЛЬНЫЙ ID книги
-    var BOOK_ID = "ukradene_shchastia"; // ← поменяй под конкретную книгу
+  <script>
+    (function () {
+      // УНИКАЛЬНЫЙ ID для книги (латиницей!)
+      var BOOK_ID = "ukradene_shchastia";
 
-    var root = document.documentElement;
-    var body = document.body;
-    var wrapper = document.getElementById("pageWrapper");
-    var bookHeader = document.getElementById("bookHeader");
-    var controls = document.querySelector(".controls");
+      var root = document.documentElement;
+      var body = document.body;
+      var wrapper = document.getElementById("pageWrapper");
+      var bookHeader = document.getElementById("bookHeader");
 
-    var fontMinus = document.getElementById("fontMinus");
-    var fontPlus = document.getElementById("fontPlus");
-    var fontLabel = document.getElementById("fontLabel");
-    var themeToggle = document.getElementById("themeToggle");
-    var prevBtn = document.getElementById("prevPage");
-    var nextBtn = document.getElementById("nextPage");
-    var pageLabel = document.getElementById("pageLabel");
+      var fontMinus = document.getElementById("fontMinus");
+      var fontPlus = document.getElementById("fontPlus");
+      var fontLabel = document.getElementById("fontLabel");
+      var themeToggle = document.getElementById("themeToggle");
+      var prevBtn = document.getElementById("prevPage");
+      var nextBtn = document.getElementById("nextPage");
+      var pageLabel = document.getElementById("pageLabel");
 
-    var fontSize = 18;
-    var saveKey = "book_scroll_" + BOOK_ID;
-    var footerHeight = 0;
-    var OVERLAP_PX = 40; // перекрытие между страницами (можешь менять)
+      var fontSize = 18;
+      var saveKey = "book_scroll_" + BOOK_ID;
+      var OVERLAP_PX = 24; // небольшое перекрытие между страницами
 
-    function measureFooter() {
-      footerHeight = controls ? (controls.offsetHeight || 0) : 0;
-      body.style.paddingBottom = (footerHeight + 8) + "px";
-    }
+      function getState() {
+        var h = wrapper.clientHeight || 1;
+        var full = wrapper.scrollHeight || h;
+        var maxScroll = Math.max(full - h, 1);
+        var top = wrapper.scrollTop || 0;
 
-    function getState() {
-      var winH = window.innerHeight || 1;
-      var pageH = Math.max(200, winH - footerHeight); // высота видимой "страницы"
+        var totalPages = Math.max(1, Math.ceil(full / h));
+        var currentPage = Math.max(
+          1,
+          Math.min(totalPages, Math.floor(top / h) + 1)
+        );
+        var percent = Math.round((top / maxScroll) * 100);
 
-      var doc = document.documentElement;
-      var full = doc.scrollHeight;
-      var top = window.scrollY || doc.scrollTop || 0;
-      var maxScroll = Math.max(full - winH, 1);
-
-      var totalPages = Math.max(1, Math.ceil((full - footerHeight) / pageH));
-      var currentPage = Math.max(
-        1,
-        Math.min(totalPages, Math.floor(top / pageH) + 1)
-      );
-      var percent = Math.round((top / maxScroll) * 100);
-
-      return {
-        top: top,
-        pageH: pageH,
-        full: full,
-        maxScroll: maxScroll,
-        total: totalPages,
-        current: currentPage,
-        percent: percent
-      };
-    }
-
-    function updateInfo() {
-      var s = getState();
-      pageLabel.textContent =
-        s.current + " / " + s.total + " · " + s.percent + "%";
-
-      if (bookHeader) {
-        bookHeader.style.display = (s.current === 1) ? "block" : "none";
+        return {
+          top: top,
+          h: h,
+          full: full,
+          maxScroll: maxScroll,
+          total: totalPages,
+          current: currentPage,
+          percent: percent
+        };
       }
-    }
 
-    function saveStateDebounced() {
-      if (saveStateDebounced._t) clearTimeout(saveStateDebounced._t);
-      saveStateDebounced._t = setTimeout(function () {
+      function updateInfo() {
         var s = getState();
+        pageLabel.textContent =
+          s.current + " / " + s.total + " · " + s.percent + "%";
+
+        if (bookHeader) {
+          bookHeader.style.display = (s.current === 1) ? "block" : "none";
+        }
+      }
+
+      function saveStateDebounced() {
+        if (saveStateDebounced._t) clearTimeout(saveStateDebounced._t);
+        saveStateDebounced._t = setTimeout(function () {
+          var s = getState();
+          try {
+            localStorage.setItem(
+              saveKey,
+              JSON.stringify({ fraction: s.top / s.maxScroll })
+            );
+          } catch (e) {}
+        }, 250);
+      }
+
+      function restoreState() {
+        var raw = null;
         try {
-          localStorage.setItem(
-            saveKey,
-            JSON.stringify({ fraction: s.top / s.maxScroll })
-          );
+          raw = localStorage.getItem(saveKey);
         } catch (e) {}
-      }, 250);
-    }
 
-    function restoreState() {
-      var raw = null;
-      try {
-        raw = localStorage.getItem(saveKey);
-      } catch (e) {}
+        if (!raw) {
+          updateInfo();
+          return;
+        }
 
-      if (!raw) {
+        var data;
+        try {
+          data = JSON.parse(raw);
+        } catch (e) {
+          updateInfo();
+          return;
+        }
+
+        if (!data || typeof data.fraction !== "number") {
+          updateInfo();
+          return;
+        }
+
+        var sNow = getState();
+        var maxScroll = sNow.maxScroll;
+        var frac = Math.max(0, Math.min(1, data.fraction));
+        wrapper.scrollTop = frac * maxScroll;
         updateInfo();
-        return;
       }
 
-      var data;
-      try {
-        data = JSON.parse(raw);
-      } catch (e) {
-        updateInfo();
-        return;
+      function goPage(delta) {
+        var s = getState();
+        var target = s.current + delta;
+        if (target < 1) target = 1;
+        if (target > s.total) target = s.total;
+
+        var newTop = (target - 1) * s.h - OVERLAP_PX;
+        if (newTop < 0) newTop = 0;
+        if (newTop > s.maxScroll) newTop = s.maxScroll;
+
+        wrapper.scrollTo({ top: newTop, behavior: "smooth" });
+
+        setTimeout(function () {
+          updateInfo();
+          saveStateDebounced();
+        }, 300);
       }
 
-      if (!data || typeof data.fraction !== "number") {
-        updateInfo();
-        return;
+      function applyFont() {
+        root.style.setProperty("--font-size", fontSize + "px");
+        fontLabel.textContent = fontSize + "px";
+        setTimeout(function () {
+          restoreState();
+          updateInfo();
+        }, 80);
       }
 
-      var doc = document.documentElement;
-      var winH = window.innerHeight || 1;
-      var full = doc.scrollHeight;
-      var maxScroll = Math.max(full - winH, 1);
-      var frac = Math.max(0, Math.min(1, data.fraction));
+      // события
+      fontMinus.addEventListener("click", function () {
+        if (fontSize > 14) {
+          fontSize -= 2;
+          applyFont();
+        }
+      });
 
-      window.scrollTo(0, frac * maxScroll);
-      updateInfo();
-    }
+      fontPlus.addEventListener("click", function () {
+        if (fontSize < 28) {
+          fontSize += 2;
+          applyFont();
+        }
+      });
 
-    function goPage(delta) {
-      var s = getState();
-      var target = s.current + delta;
-      if (target < 1) target = 1;
-      if (target > s.total) target = s.total;
+      themeToggle.addEventListener("click", function () {
+        var dark = body.classList.toggle("dark");
+        themeToggle.textContent = dark ? "☀️" : "🌙";
+        themeToggle.classList.toggle("active", dark);
+      });
 
-      var newTop = (target - 1) * s.pageH - OVERLAP_PX;
-      if (newTop < 0) newTop = 0;
+      prevBtn.addEventListener("click", function () {
+        goPage(-1);
+      });
 
-      var doc = document.documentElement;
-      var winH = window.innerHeight || 1;
-      var maxScroll = Math.max(doc.scrollHeight - winH, 0);
-      if (newTop > maxScroll) newTop = maxScroll;
+      nextBtn.addEventListener("click", function () {
+        goPage(1);
+      });
 
-      window.scrollTo({ top: newTop, behavior: "smooth" });
-      setTimeout(function () {
+      wrapper.addEventListener("scroll", function () {
         updateInfo();
         saveStateDebounced();
-      }, 350);
-    }
+      });
 
-    function applyFont() {
-      root.style.setProperty("--font-size", fontSize + "px");
-      fontLabel.textContent = fontSize + "px";
-      setTimeout(function () {
-        measureFooter();
-        updateInfo();
+      window.addEventListener("resize", function () {
         restoreState();
-      }, 80);
-    }
+      });
 
-    // события
-    fontMinus.addEventListener("click", function () {
-      if (fontSize > 14) {
-        fontSize -= 2;
-        applyFont();
-      }
-    });
-
-    fontPlus.addEventListener("click", function () {
-      if (fontSize < 28) {
-        fontSize += 2;
-        applyFont();
-      }
-    });
-
-    themeToggle.addEventListener("click", function () {
-      var dark = body.classList.toggle("dark");
-      themeToggle.textContent = dark ? "☀️" : "🌙";
-      themeToggle.classList.toggle("active", dark);
-    });
-
-    prevBtn.addEventListener("click", function () {
-      goPage(-1);
-    });
-
-    nextBtn.addEventListener("click", function () {
-      goPage(1);
-    });
-
-    window.addEventListener("scroll", function () {
-      updateInfo();
-      saveStateDebounced();
-    });
-
-    window.addEventListener("resize", function () {
-      measureFooter();
-      restoreState();
-    });
-
-    // Старт
-    measureFooter();
-    applyFont();
-    window.addEventListener("load", function () {
-      measureFooter();
-      restoreState();
-    });
-  })();
-</script>
-
-
+      // старт
+      applyFont();
+      window.addEventListener("load", function () {
+        restoreState();
+      });
+    })();
+  </script>
 </body>
 </html>
