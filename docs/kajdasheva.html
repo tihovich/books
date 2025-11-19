@@ -57,33 +57,36 @@
     }
 
     /* ВНУТРЕННЯЯ ОБЛАСТЬ ПРОКРУТКИ */
-    .page-wrapper {
+   /* ВНУТРЕННЯЯ ОБЛАСТЬ ПРОКРУТКИ */
+.page-wrapper {
   flex: 1;
   border-radius: 10px;
-  /* снизу совсем маленький отступ над футером */
-  padding: 2px 4px 4px;
-  height: calc(100vh - 140px);      /* чуть больше высота, текст ближе к футеру */
-  max-height: calc(100vh - 140px);
+  padding: 2px 4px 0;                 /* без лишнего отступа снизу */
+  height: calc(100vh - 125px);        /* ещё ближе к футеру */
+  max-height: calc(100vh - 125px);
   overflow-y: auto;
   scroll-behavior: smooth;
   margin-bottom: 0;
 }
 
+
     /* маленький буфер, чтобы текст не прилипал к краю */
+/* маленький буфер, чтобы текст совсем не лип к краю */
 .book-content {
-  padding-bottom: 6px;
+  padding-bottom: 4px;  /* реально маленький отступ */
 }
 
 /* стандартные абзацы */
 .book-content p {
-  margin: 0 0 0.7em;
+  margin: 0 0 0.6em;    /* чуть меньше расстояние между абзацами */
   text-align: justify;
 }
 
-/* у последнего абзаца нет нижнего margin вообще */
+/* у последнего абзаца нет нижнего margin */
 .book-content p:last-child {
   margin-bottom: 0;
 }
+
     /* Титул как часть текста (в начале книги) */
     .book-title-block {
       text-align: center;
