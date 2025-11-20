@@ -56,38 +56,31 @@
       flex-direction: column;
     }
 
-    /* ВНУТРЕННЯЯ ОБЛАСТЬ ПРОКРУТКИ */
-   /* ВНУТРЕННЯЯ ОБЛАСТЬ ПРОКРУТКИ */
-.page-wrapper {
-  flex: 1;
-  border-radius: 10px;
-  padding: 2px 4px 0;                 /* без лишнего отступа снизу */
-  height: calc(80vh - 80px);        /* ещё ближе к футеру */
-  max-height: calc(80vh - 80px);
-  overflow-y: auto;
-  scroll-behavior: smooth;
-  margin-bottom: 0;
-}
+    /* ВНУТРЕННЯЯ ОБЛАСТЬ ПРОКРУТКИ — без фиксированной высоты,
+       её задаём через JS по реальной геометрии */
+    .page-wrapper {
+      flex: 1;
+      border-radius: 10px;
+      padding: 2px 4px 0;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+      margin-bottom: 0;
+    }
 
+    /* небольшой буфер, чтобы текст не прилипал к низу */
+    .book-content {
+      padding-bottom: 6px;
+    }
 
-    /* маленький буфер, чтобы текст не прилипал к краю */
-/* маленький буфер, чтобы текст совсем не лип к краю */
-.book-content {
-  padding-bottom: 4px;  /* реально маленький отступ */
-}
+    .book-content p {
+      margin: 0 0 0.7em;
+      text-align: justify;
+    }
 
-/* стандартные абзацы */
-.book-content p {
-  margin: 0 0 0.6em;    /* чуть меньше расстояние между абзацами */
-  text-align: justify;
-}
+    .book-content p:last-child {
+      margin-bottom: 0;
+    }
 
-/* у последнего абзаца нет нижнего margin */
-.book-content p:last-child {
-  margin-bottom: 0;
-}
-
-    /* Титул как часть текста (в начале книги) */
     .book-title-block {
       text-align: center;
       margin: 6px 0 14px;
@@ -175,10 +168,6 @@
     @media(max-width:480px){
       .reader { padding: 8px 6px 12px; }
       .book-title-block h1 { font-size: 1.45em; }
-      .page-wrapper {
-        height: calc(100vh - 150px);
-        max-height: calc(100vh - 150px);
-      }
     }
   </style>
 </head>
@@ -186,11 +175,10 @@
 <body>
   <div class="shell">
     <article class="reader">
-      <!-- ВНУТРЕННИЙ СКРОЛЛ -->
       <div class="page-wrapper" id="pageWrapper">
         <div class="book-content" id="bookContent">
 
-          <!-- Титул просто в начале текста -->
+          <!-- Титул в начале текста -->
           <div class="book-title-block">
             <h1>Кайдашева сім'я</h1>
             <div class="book-subtitle">Іван Нечуй-Левицький</div>
@@ -198,7 +186,7 @@
           </div>
 
           <!-- 🔽🔽🔽 ТЕКСТ КНИГИ 🔽🔽🔽 -->
-          <p>Повість</p>
+         <p>Повість</p>
 <p>
 Недалеко от Богуслава, коло Росі, в довгому покрученому яру розкинулось село Семигори. Яр в'ється гадюкою між крутими горами, між зеленими терасами; од яру на всі боки розбіглись, неначе гілки дерева, глибокі рукави й поховались десь далеко в густих лісах. На дні довгого яру блищать рядками ставочки в очеретах, в осоці, зеленіють левади. Греблі обсаджені столітніми вербами. В глибокому яру ніби в'ється оксамитовий зелений пояс, на котрому блищать ніби вправлені в зелену оправу прикраси з срібла. Два рядки білих хат попід горами біліють, неначе два рядки перлів на зеленому поясі. Коло хат зеленіють густі старі садки.</p>
 <p>
@@ -3507,7 +3495,8 @@ IХ</p>
 — Навчай, навчай! Яка премудра! — не втерпіла баба Параска. — Подивись, лишень, на себе! Коли б твого чоловіка хто посунув за діброву, а твою дочку аж за Рось, а тебе аж у саме пекло, то, може б, і між вами був мир.</p>
 <p>
 Діло з грушею скінчилось несподівано.Груша всохла, і дві сім’ї помирились.В обох садибах настала мирнота й тиша.</p>
-<p>1878 року</p>
+<p>
+1878 року</p>
           <!-- 🔼🔼🔼 ДО СЮДА ТЕКСТ КНИГИ 🔼🔼🔼 -->
 
         </div>
@@ -3539,6 +3528,7 @@ IХ</p>
       var root = document.documentElement;
       var body = document.body;
       var wrapper = document.getElementById("pageWrapper");
+      var controls = document.querySelector(".controls");
 
       var fontMinus = document.getElementById("fontMinus");
       var fontPlus = document.getElementById("fontPlus");
@@ -3550,7 +3540,20 @@ IХ</p>
 
       var fontSize = 18;
       var saveKey = "book_scroll_" + BOOK_ID;
-      var OVERLAP_PX = 24; // небольшой дубль строк между "страницами"
+      var OVERLAP_PX = 24;
+
+      // ❗ Ключевая функция: подгоняем высоту зоны чтения
+      // ровно до футера минус маленький зазор.
+      function measureLayout() {
+        var wrapRect = wrapper.getBoundingClientRect();
+        var controlsRect = controls.getBoundingClientRect();
+        var available = controlsRect.top - wrapRect.top - 8; // 8px зазор
+
+        if (available < 200) available = 200;
+
+        wrapper.style.height = available + "px";
+        wrapper.style.maxHeight = available + "px";
+      }
 
       function getDims() {
         var h = wrapper.clientHeight || 1;
@@ -3633,7 +3636,9 @@ IХ</p>
       function applyFont() {
         root.style.setProperty("--font-size", fontSize + "px");
         fontLabel.textContent = fontSize + "px";
+
         setTimeout(function () {
+          measureLayout();
           restoreState();
           updateInfo();
         }, 100);
@@ -3674,15 +3679,19 @@ IХ</p>
       });
 
       window.addEventListener("resize", function () {
+        // при повороте / смене размера заново меряем высоту
         setTimeout(function () {
+          measureLayout();
           restoreState();
           updateInfo();
         }, 100);
       });
 
       // старт
+      measureLayout();
       applyFont();
       window.addEventListener("load", function () {
+        measureLayout();
         restoreState();
       });
     })();
